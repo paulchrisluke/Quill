@@ -8,3 +8,131 @@ License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: quill
 */
+
+/* Recipe Block Styles */
+.recipe-block {
+    max-width: 800px;
+    margin: 2em auto;
+    padding: 2em;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-title {
+    font-size: 2em;
+    color: #333;
+    margin-bottom: 0.5em;
+}
+
+.recipe-description {
+    font-size: 1.1em;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 2em;
+}
+
+.recipe-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1em;
+    margin-bottom: 2em;
+    padding: 1em;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.recipe-meta p {
+    margin: 0;
+    padding: 0.5em;
+    color: #555;
+}
+
+.recipe-ingredients,
+.recipe-instructions,
+.recipe-equipment,
+.recipe-notes,
+.recipe-nutrition {
+    margin-bottom: 2em;
+}
+
+.recipe-ingredients h3,
+.recipe-instructions h3,
+.recipe-equipment h3,
+.recipe-notes h3,
+.recipe-nutrition h3 {
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+}
+
+.recipe-ingredients ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.recipe-ingredients li {
+    padding: 0.5em 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.recipe-instructions ol {
+    padding-left: 1.5em;
+}
+
+.recipe-instructions li {
+    margin-bottom: 1em;
+    line-height: 1.6;
+}
+
+.recipe-equipment ul,
+.recipe-notes ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.recipe-equipment li,
+.recipe-notes li {
+    padding: 0.5em 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.nutrition-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.nutrition-table th,
+.nutrition-table td {
+    padding: 0.75em;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.nutrition-table th {
+    width: 40%;
+    color: #666;
+    font-weight: 600;
+}
+
+/* AMP-specific styles */
+.amp-wp-article .recipe-block {
+    margin: 1em 0;
+    padding: 1em;
+}
+
+@media screen and (max-width: 600px) {
+    .recipe-block {
+        padding: 1em;
+    }
+
+    .recipe-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .nutrition-table th,
+    .nutrition-table td {
+        padding: 0.5em;
+    }
+}

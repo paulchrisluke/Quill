@@ -554,3 +554,9 @@ function quill_admin_scripts()
     }
 }
 add_action('admin_enqueue_scripts', 'quill_admin_scripts');
+
+/**
+ * Include Recipe Generator and Nutrition Calculator
+ */
+require_once get_template_directory() . '/includes/class-quill-openai.php';
+require_once get_template_directory() . '/includes/class-quill-nutrition.php';
