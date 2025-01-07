@@ -139,9 +139,9 @@ registerBlockType('quill/recipe', {
         }
 
         function organizeRecipe() {
-            // Only organize if we have basic recipe data
-            if (!attributes.ingredients || !attributes.instructions) {
-                alert('Please generate a recipe first!');
+            // Only organize if we have nutrition data
+            if (!attributes.nutrition?.calories || !attributes.ingredients || !attributes.instructions) {
+                alert('Please generate recipe and calculate nutrition first!');
                 return;
             }
 
@@ -212,9 +212,9 @@ registerBlockType('quill/recipe', {
         }
 
         function calculateNutrition() {
-            // Only calculate if we have organized recipe data
-            if (!attributes.ingredients || !attributes.yield) {
-                alert('Please organize the recipe first!');
+            // Only calculate if we have recipe data
+            if (!attributes.ingredients) {
+                alert('Please generate a recipe first!');
                 return;
             }
 
@@ -321,12 +321,12 @@ registerBlockType('quill/recipe', {
                 }, '1. Generate Recipe'),
                 createElement(Button, {
                     isSecondary: true,
-                    onClick: organizeRecipe
-                }, '2. Recipe Organizer'),
+                    onClick: calculateNutrition
+                }, '2. Calculate Nutrition'),
                 createElement(Button, {
                     isSecondary: true,
-                    onClick: calculateNutrition
-                }, '3. Calculate Nutrition')
+                    onClick: organizeRecipe
+                }, '3. Recipe Organizer')
             ]),
             createElement('div', {}, [
                 createElement('div', { style: { marginBottom: '1em' } }, [
@@ -413,126 +413,142 @@ registerBlockType('quill/recipe', {
                     createElement(TextControl, {
                         label: 'Serving Size',
                         value: attributes.nutrition?.servingSize || '',
+                        disabled: attributes.nutrition?.servingSize?.includes('🥄'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, servingSize: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Number of Servings',
-                        type: 'number',
+                        type: attributes.nutrition?.servings?.includes('🍽️') ? 'text' : 'number',
                         value: attributes.nutrition?.servings || '',
+                        disabled: attributes.nutrition?.servings?.includes('🍽️'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, servings: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Calories',
-                        type: 'number',
+                        type: attributes.nutrition?.calories?.includes('🔢') ? 'text' : 'number',
                         value: attributes.nutrition?.calories || '',
+                        disabled: attributes.nutrition?.calories?.includes('🔢'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, calories: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Total Fat (g)',
-                        type: 'number',
+                        type: attributes.nutrition?.fatContent?.includes('📊') ? 'text' : 'number',
                         value: attributes.nutrition?.fatContent || '',
+                        disabled: attributes.nutrition?.fatContent?.includes('📊'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, fatContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Saturated Fat (g)',
-                        type: 'number',
+                        type: attributes.nutrition?.saturatedFatContent?.includes('🥓') ? 'text' : 'number',
                         value: attributes.nutrition?.saturatedFatContent || '',
+                        disabled: attributes.nutrition?.saturatedFatContent?.includes('🥓'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, saturatedFatContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Cholesterol (mg)',
-                        type: 'number',
+                        type: attributes.nutrition?.cholesterolContent?.includes('🍳') ? 'text' : 'number',
                         value: attributes.nutrition?.cholesterolContent || '',
+                        disabled: attributes.nutrition?.cholesterolContent?.includes('🍳'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, cholesterolContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Sodium (mg)',
-                        type: 'number',
+                        type: attributes.nutrition?.sodiumContent?.includes('🧂') ? 'text' : 'number',
                         value: attributes.nutrition?.sodiumContent || '',
+                        disabled: attributes.nutrition?.sodiumContent?.includes('🧂'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, sodiumContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Total Carbohydrates (g)',
-                        type: 'number',
+                        type: attributes.nutrition?.carbohydrateContent?.includes('🍚') ? 'text' : 'number',
                         value: attributes.nutrition?.carbohydrateContent || '',
+                        disabled: attributes.nutrition?.carbohydrateContent?.includes('🍚'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, carbohydrateContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Dietary Fiber (g)',
-                        type: 'number',
+                        type: attributes.nutrition?.fiberContent?.includes('🥬') ? 'text' : 'number',
                         value: attributes.nutrition?.fiberContent || '',
+                        disabled: attributes.nutrition?.fiberContent?.includes('🥬'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, fiberContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Sugars (g)',
-                        type: 'number',
+                        type: attributes.nutrition?.sugarContent?.includes('🍯') ? 'text' : 'number',
                         value: attributes.nutrition?.sugarContent || '',
+                        disabled: attributes.nutrition?.sugarContent?.includes('🍯'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, sugarContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Protein (g)',
-                        type: 'number',
+                        type: attributes.nutrition?.proteinContent?.includes('🥩') ? 'text' : 'number',
                         value: attributes.nutrition?.proteinContent || '',
+                        disabled: attributes.nutrition?.proteinContent?.includes('🥩'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, proteinContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Vitamin C (%)',
-                        type: 'number',
+                        type: attributes.nutrition?.vitaminC?.includes('🍊') ? 'text' : 'number',
                         value: attributes.nutrition?.vitaminC || '',
+                        disabled: attributes.nutrition?.vitaminC?.includes('🍊'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, vitaminC: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Calcium (%)',
-                        type: 'number',
+                        type: attributes.nutrition?.calciumContent?.includes('🥛') ? 'text' : 'number',
                         value: attributes.nutrition?.calciumContent || '',
+                        disabled: attributes.nutrition?.calciumContent?.includes('🥛'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, calciumContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Iron (%)',
-                        type: 'number',
+                        type: attributes.nutrition?.ironContent?.includes('🥬') ? 'text' : 'number',
                         value: attributes.nutrition?.ironContent || '',
+                        disabled: attributes.nutrition?.ironContent?.includes('🥬'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, ironContent: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Vitamin D (%)',
-                        type: 'number',
+                        type: attributes.nutrition?.vitaminD?.includes('☀️') ? 'text' : 'number',
                         value: attributes.nutrition?.vitaminD || '',
+                        disabled: attributes.nutrition?.vitaminD?.includes('☀️'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, vitaminD: value }
                         })
                     }),
                     createElement(TextControl, {
                         label: 'Potassium (mg)',
-                        type: 'number',
+                        type: attributes.nutrition?.potassiumContent?.includes('🍌') ? 'text' : 'number',
                         value: attributes.nutrition?.potassiumContent || '',
+                        disabled: attributes.nutrition?.potassiumContent?.includes('🍌'),
                         onChange: (value) => setAttributes({ 
                             nutrition: { ...attributes.nutrition, potassiumContent: value }
                         })
