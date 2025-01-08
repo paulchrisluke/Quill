@@ -23,6 +23,9 @@ require_once(ABSPATH . 'wp-includes/capabilities.php');
 // Define theme constants
 define('QUILL_VERSION', '1.0.0');
 
+// Load OpenAI integration
+require_once get_template_directory() . '/includes/class-quill-openai.php';
+
 /**
  * Theme Setup
  */
@@ -556,7 +559,192 @@ function quill_admin_scripts()
 add_action('admin_enqueue_scripts', 'quill_admin_scripts');
 
 /**
- * Include Recipe Generator and Nutrition Calculator
+ * Load and Initialize Quill Classes
  */
-require_once get_template_directory() . '/includes/class-quill-openai.php';
-require_once get_template_directory() . '/includes/class-quill-nutrition.php';
+function quill_load_classes()
+{
+    // Load required class files
+    require_once get_template_directory() . '/includes/class-quill-openai.php';
+    require_once get_template_directory() . '/includes/class-quill-recipe.php';
+
+    // Initialize classes
+    global $quill_openai, $quill_recipe;
+    $quill_openai = new Quill_OpenAI();
+    $quill_recipe = new Quill_Recipe();
+}
+add_action('init', 'quill_load_classes');
+
+/**
+ * Add additional schema markup for recipes
+ */
+function quill_add_recipe_schema()
+{
+    if (!is_singular('post')) return;
+
+    global $post;
+
+    // Get site info
+    $site_url = get_site_url();
+    $site_name = get_bloginfo('name');
+    $site_description = get_bloginfo('description');
+    $logo = get_theme_mod('custom_logo');
+    $logo_url = $logo ? wp_get_attachment_image_url($logo, 'full') : '';
+
+    // Get post info
+    $post_url = get_permalink();
+    $post_title = get_the_title();
+    $post_excerpt = get_the_excerpt();
+    $post_date = get_the_date('c');
+    $modified_date = get_the_modified_date('c');
+    $word_count = str_word_count(strip_tags($post->post_content));
+    $comment_count = get_comments_number();
+
+    // Get author info
+    $author_id = get_the_author_meta('ID');
+    $author_name = get_the_author();
+    $author_url = get_author_posts_url($author_id);
+
+    // Get featured image info
+    $thumbnail_id = get_post_thumbnail_id();
+    $thumbnail_url = get_the_post_thumbnail_url(null, 'full');
+    $thumbnail_width = 1200; // Default width
+    $thumbnail_height = 2133; // Default height
+
+    if ($thumbnail_id) {
+        $thumbnail_meta = wp_get_attachment_metadata($thumbnail_id);
+        if ($thumbnail_meta) {
+            $thumbnail_width = $thumbnail_meta['width'];
+            $thumbnail_height = $thumbnail_meta['height'];
+        }
+    }
+
+    // Get breadcrumb data
+    $categories = get_the_category();
+    $breadcrumbs = array();
+    $breadcrumbs[] = array(
+        'position' => 1,
+        'name' => 'Home',
+        'item' => $site_url
+    );
+
+    if (!empty($categories)) {
+        $main_category = $categories[0];
+        if ($main_category->parent != 0) {
+            $parent = get_term($main_category->parent, 'category');
+            $breadcrumbs[] = array(
+                'position' => 2,
+                'name' => $parent->name,
+                'item' => get_term_link($parent)
+            );
+            $breadcrumbs[] = array(
+                'position' => 3,
+                'name' => $main_category->name,
+                'item' => get_term_link($main_category)
+            );
+            $breadcrumbs[] = array(
+                'position' => 4,
+                'name' => $post_title
+            );
+        } else {
+            $breadcrumbs[] = array(
+                'position' => 2,
+                'name' => $main_category->name,
+                'item' => get_term_link($main_category)
+            );
+            $breadcrumbs[] = array(
+                'position' => 3,
+                'name' => $post_title
+            );
+        }
+    }
+
+    // Get social media links
+    $social_links = array(
+        'youtube' => 'https://www.youtube.com/@tiffyycooks',
+        'tiktok' => 'https://www.tiktok.com/@tiffycooks',
+        'instagram' => 'https://www.instagram.com/tiffy.cooks/'
+    );
+
+    // Build schema array
+    $schema = array(
+        '@context' => 'https://schema.org',
+        '@graph' => array(
+            array(
+                '@type' => 'Article',
+                '@id' => $post_url . '#article',
+                'headline' => $post_title,
+                'description' => $post_excerpt,
+                'datePublished' => $post_date,
+                'dateModified' => $modified_date,
+                'wordCount' => $word_count,
+                'commentCount' => $comment_count,
+                'articleSection' => wp_list_pluck($categories, 'name'),
+                'inLanguage' => get_locale(),
+                'author' => array(
+                    '@type' => 'Person',
+                    '@id' => $site_url . '/#/schema/person/' . md5($author_name),
+                    'name' => $author_name,
+                    'url' => $author_url
+                ),
+                'publisher' => array(
+                    '@type' => 'Organization',
+                    '@id' => $site_url . '/#organization',
+                    'name' => $site_name,
+                    'url' => $site_url,
+                    'sameAs' => array_values($social_links),
+                    'logo' => array(
+                        '@type' => 'ImageObject',
+                        '@id' => $site_url . '/#/schema/logo/image/',
+                        'url' => $logo_url,
+                        'contentUrl' => $logo_url,
+                        'width' => 1000,
+                        'height' => 300,
+                        'caption' => $site_name
+                    )
+                )
+            ),
+            array(
+                '@type' => 'WebPage',
+                '@id' => $post_url,
+                'url' => $post_url,
+                'name' => $post_title . ' - ' . $site_name,
+                'description' => $post_excerpt,
+                'datePublished' => $post_date,
+                'dateModified' => $modified_date,
+                'inLanguage' => get_locale(),
+                'isPartOf' => array(
+                    '@type' => 'WebSite',
+                    '@id' => $site_url . '/#website',
+                    'url' => $site_url,
+                    'name' => $site_name,
+                    'description' => $site_description,
+                    'publisher' => array('@id' => $site_url . '/#organization')
+                ),
+                'primaryImageOfPage' => array(
+                    '@type' => 'ImageObject',
+                    '@id' => $post_url . '#primaryimage',
+                    'url' => $thumbnail_url,
+                    'contentUrl' => $thumbnail_url,
+                    'width' => $thumbnail_width,
+                    'height' => $thumbnail_height
+                ),
+                'breadcrumb' => array(
+                    '@type' => 'BreadcrumbList',
+                    '@id' => $post_url . '#breadcrumb',
+                    'itemListElement' => array_map(function ($crumb) {
+                        return array(
+                            '@type' => 'ListItem',
+                            'position' => $crumb['position'],
+                            'name' => $crumb['name'],
+                            'item' => isset($crumb['item']) ? $crumb['item'] : null
+                        );
+                    }, $breadcrumbs)
+                )
+            )
+        )
+    );
+
+    // Output schema
+    echo '<script type="application/ld+json">' . wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>';
+}
+add_action('wp_footer', 'quill_add_recipe_schema');

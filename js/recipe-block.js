@@ -1,694 +1,508 @@
 const { registerBlockType } = wp.blocks;
-const { Button, TextControl, TextareaControl, PanelBody } = wp.components;
+const { Button, PanelBody, Notice } = wp.components;
 const { InspectorControls } = wp.blockEditor;
 const { __ } = wp.i18n;
-const { select } = wp.data;
-const { createElement } = wp.element;
+const { useSelect } = wp.data;
+const { createElement, useState } = wp.element;
+const { createBlock } = wp.blocks;
+const { dispatch } = wp.data;
+const apiFetch = wp.apiFetch;
 
 registerBlockType('quill/recipe', {
-    title: 'Recipe Generator',
+    apiVersion: 2,
+    title: __('Recipe Generator', 'quill'),
     icon: 'food',
-    category: 'common',
+    category: 'text',
+    supports: {
+        html: false,
+        multiple: false
+    },
+
     attributes: {
-        ingredients: {
-            type: 'string',
-            default: ''
-        },
-        instructions: {
-            type: 'string',
-            default: ''
-        },
-        prep_time: {
-            type: 'string',
-            default: ''
-        },
-        cook_time: {
-            type: 'string',
-            default: ''
-        },
-        total_time: {
-            type: 'string',
-            default: ''
-        },
-        yield: {
-            type: 'string',
-            default: ''
-        },
-        calories: {
-            type: 'string',
-            default: ''
-        },
-        cuisine: {
-            type: 'string',
-            default: ''
-        },
-        category: {
-            type: 'string',
-            default: ''
-        },
-        keywords: {
-            type: 'array',
-            default: []
-        },
-        notes: {
-            type: 'array',
-            default: []
-        },
-        equipment: {
-            type: 'array',
-            default: []
-        },
-        difficulty: {
-            type: 'string',
-            default: ''
-        },
-        nutrition: {
+        generatedSchema: {
             type: 'object',
-            default: {
-                servingSize: '',
-                servings: '',
-                calories: '',
-                fatContent: '',
-                saturatedFatContent: '',
-                cholesterolContent: '',
-                sodiumContent: '',
-                carbohydrateContent: '',
-                fiberContent: '',
-                sugarContent: '',
-                proteinContent: '',
-                vitaminC: '',
-                calciumContent: '',
-                ironContent: '',
-                vitaminD: '',
-                potassiumContent: ''
-            }
+            default: null
         }
     },
 
     edit: function(props) {
         const { attributes, setAttributes } = props;
+        const [isGenerating, setIsGenerating] = useState(false);
+        const [error, setError] = useState(null);
         
-        function generateRecipe() {
-            const content = select('core/editor').getEditedPostContent();
-            const postId = select('core/editor').getCurrentPostId();
-            
-            // Set loading state for all fields
-            setAttributes({
-                ingredients: '👩‍🍳 Gathering ingredients...',
-                instructions: '📝 Crafting the perfect recipe steps...',
-                prep_time: '⏲️ Calculating prep time...',
-                cook_time: '🔥 Estimating cooking duration...'
-            });
-            
-            jQuery.ajax({
-                url: quillData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'quill_generate_recipe',
-                    nonce: quillData.nonce,
-                    content: content,
-                    post_id: postId
-                },
-                timeout: 65000,
-                success: function(response) {
-                    if (response.success && response.data) {
-                        console.log('Recipe data received:', response.data);
-                        setAttributes(response.data);
-                    } else {
-                        setAttributes({
-                            ingredients: '❌ ' + (response.data || '🤔 Hmm... our chef needs another try at this recipe!'),
-                            instructions: '🔄 Click "Generate Recipe" to try again',
-                            prep_time: '',
-                            cook_time: ''
-                        });
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    let errorMessage = textStatus === 'timeout' ? 
-                        '⏰ Oops! The recipe took too long to cook up. Please try again.' : 
-                        '🤔 Something went wrong in the kitchen. Let\'s try again!';
-                    
-                    setAttributes({
-                        ingredients: '❌ ' + errorMessage,
-                        instructions: '🔄 Click "Generate Recipe" to try again',
-                        prep_time: '',
-                        cook_time: ''
-                    });
+        const postContent = useSelect(select => 
+            select('core/editor').getEditedPostContent()
+        );
+
+        const postId = useSelect(select =>
+            select('core/editor').getCurrentPostId()
+        );
+
+        const postTitle = useSelect(select =>
+            select('core/editor').getEditedPostAttribute('title')
+        );
+
+        const postPermalink = useSelect(select =>
+            select('core/editor').getPermalink()
+        );
+
+        // Get post author info
+        const author = useSelect(select => {
+            const authorId = select('core/editor').getEditedPostAttribute('author');
+            const authorInfo = select('core').getEntityRecord('root', 'user', authorId);
+            return authorInfo;
+        });
+
+        // Get site info
+        const site = useSelect(select => {
+            return {
+                name: select('core').getSite()?.title,
+                description: select('core').getSite()?.description,
+                url: select('core').getSite()?.url,
+                logo: select('core').getEntityRecord('root', 'site')?.site_logo_url,
+                social: select('core').getEntityRecord('root', 'site')?.social_links
+            };
+        });
+
+        // Get featured image and media from post
+        const media = useSelect(select => {
+            const featuredImageId = select('core/editor').getEditedPostAttribute('featured_media');
+            const featuredImage = featuredImageId ? select('core').getMedia(featuredImageId) : null;
+            return featuredImage;
+        });
+
+        // Get embedded videos from post content
+        const getVideoInfo = (content) => {
+            const videoEmbed = content.match(/<figure class="wp-block-embed[^>]*>\s*<div[^>]*>\s*<iframe[^>]*src="([^"]*)"[^>]*>/);
+            if (videoEmbed) {
+                const embedUrl = videoEmbed[1];
+                // Extract video ID for YouTube or Vimeo
+                const videoId = embedUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+                if (videoId) {
+                    return {
+                        "@type": "VideoObject",
+                        "name": postTitle,
+                        "description": postTitle,
+                        "uploadDate": new Date().toISOString().replace(/\.\d+Z$/, '+00:00'),
+                        "thumbnailUrl": `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                        "embedUrl": `https://www.youtube.com/embed/${videoId}?feature=oembed`,
+                        "contentUrl": `https://www.youtube.com/watch?v=${videoId}`
+                    };
                 }
-            });
-        }
-
-        function organizeRecipe() {
-            // Only organize if we have nutrition data
-            if (!attributes.nutrition?.calories || !attributes.ingredients || !attributes.instructions) {
-                alert('Please generate recipe and calculate nutrition first!');
-                return;
             }
-
-            // Calculate total time from prep and cook time
-            let total = 0;
-            if (attributes.prep_time) {
-                const prepMinutes = parseInt(attributes.prep_time.match(/\d+/)[0]);
-                total += prepMinutes;
-            }
-            if (attributes.cook_time) {
-                const cookMinutes = parseInt(attributes.cook_time.match(/\d+/)[0]);
-                total += cookMinutes;
-            }
-
-            // Set loading states for organization fields
-            setAttributes({
-                total_time: `PT${total}M`,
-                yield: '🍽️ Organizing servings...',
-                cuisine: '🌍 Determining cuisine...',
-                category: '📑 Categorizing recipe...',
-                keywords: ['✨ Finding keywords...'],
-                notes: ['📌 Analyzing recipe...'],
-                equipment: ['🔪 Listing equipment...'],
-                difficulty: '📈 Assessing difficulty...'
-            });
-
-            jQuery.ajax({
-                url: quillData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'quill_organize_recipe',
-                    nonce: quillData.nonce,
-                    ingredients: attributes.ingredients,
-                    instructions: attributes.instructions,
-                    prep_time: attributes.prep_time,
-                    cook_time: attributes.cook_time,
-                    total_time: `PT${total}M`
-                },
-                timeout: 65000,
-                success: function(response) {
-                    if (response.success && response.data) {
-                        console.log('Recipe organization data received:', response.data);
-                        setAttributes(response.data);
-                    } else {
-                        setAttributes({
-                            yield: '',
-                            cuisine: '',
-                            category: '',
-                            keywords: [],
-                            notes: [],
-                            equipment: [],
-                            difficulty: ''
-                        });
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    setAttributes({
-                        yield: '',
-                        cuisine: '',
-                        category: '',
-                        keywords: [],
-                        notes: [],
-                        equipment: [],
-                        difficulty: ''
-                    });
-                }
-            });
-        }
-
-        function calculateNutrition() {
-            // Only calculate if we have recipe data
-            if (!attributes.ingredients) {
-                alert('Please generate a recipe first!');
-                return;
-            }
-
-            // Set loading states for nutrition fields
-            setAttributes({
-                nutrition: {
-                    servingSize: '🥄 Measuring portions...',
-                    servings: attributes.yield,
-                    calories: '🔢 Calculating calories...',
-                    fatContent: '📊 Measuring fats...',
-                    saturatedFatContent: '🥓 Calculating saturated fats...',
-                    cholesterolContent: '🍳 Measuring cholesterol...',
-                    sodiumContent: '🧂 Checking sodium...',
-                    carbohydrateContent: '🍚 Measuring carbs...',
-                    fiberContent: '🥬 Calculating fiber...',
-                    sugarContent: '🍯 Measuring sugars...',
-                    proteinContent: '🥩 Counting proteins...',
-                    vitaminC: '🍊 Measuring vitamin C...',
-                    calciumContent: '🥛 Calculating calcium...',
-                    ironContent: '🥬 Measuring iron...',
-                    vitaminD: '☀️ Calculating vitamin D...',
-                    potassiumContent: '🍌 Measuring potassium...'
-                }
-            });
-
-            jQuery.ajax({
-                url: quillData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'quill_calculate_nutrition',
-                    nonce: quillData.nonce,
-                    ingredients: attributes.ingredients,
-                    servings: attributes.yield
-                },
-                timeout: 65000,
-                success: function(response) {
-                    if (response.success && response.data) {
-                        console.log('Nutrition data received:', response.data);
-                        // Clean nutrition data by stripping units before setting
-                        const cleanedNutrition = {};
-                        for (const [key, value] of Object.entries(response.data)) {
-                            if (typeof value === 'string') {
-                                // Extract numeric value from string (e.g., "0g" -> "0")
-                                const numericValue = value.replace(/[^0-9.]/g, '');
-                                cleanedNutrition[key] = numericValue;
-                            } else {
-                                cleanedNutrition[key] = value;
-                            }
-                        }
-                        setAttributes({ nutrition: cleanedNutrition });
-                    } else {
-                        setAttributes({
-                            nutrition: {
-                                servingSize: '',
-                                servings: attributes.yield,
-                                calories: '',
-                                fatContent: '',
-                                saturatedFatContent: '',
-                                cholesterolContent: '',
-                                sodiumContent: '',
-                                carbohydrateContent: '',
-                                fiberContent: '',
-                                sugarContent: '',
-                                proteinContent: '',
-                                vitaminC: '',
-                                calciumContent: '',
-                                ironContent: '',
-                                vitaminD: '',
-                                potassiumContent: ''
-                            }
-                        });
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    setAttributes({
-                        nutrition: {
-                            servingSize: '',
-                            servings: attributes.yield,
-                            calories: '',
-                            fatContent: '',
-                            saturatedFatContent: '',
-                            cholesterolContent: '',
-                            sodiumContent: '',
-                            carbohydrateContent: '',
-                            fiberContent: '',
-                            sugarContent: '',
-                            proteinContent: '',
-                            vitaminC: '',
-                            calciumContent: '',
-                            ironContent: '',
-                            vitaminD: '',
-                            potassiumContent: ''
-                        }
-                    });
-                }
-            });
-        }
-
-        return [
-            createElement('div', { style: { display: 'flex', gap: '1em', marginBottom: '1em' } }, [
-                createElement(Button, {
-                    isPrimary: true,
-                    onClick: generateRecipe
-                }, '1. Generate Recipe'),
-                createElement(Button, {
-                    isSecondary: true,
-                    onClick: calculateNutrition
-                }, '2. Calculate Nutrition'),
-                createElement(Button, {
-                    isSecondary: true,
-                    onClick: organizeRecipe
-                }, '3. Recipe Organizer')
-            ]),
-            createElement('div', {}, [
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Recipe Details'),
-                    createElement(TextControl, {
-                        label: 'Cuisine Type',
-                        value: attributes.cuisine,
-                        onChange: (value) => setAttributes({ cuisine: value })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Category',
-                        value: attributes.category,
-                        onChange: (value) => setAttributes({ category: value })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Difficulty',
-                        value: attributes.difficulty,
-                        onChange: (value) => setAttributes({ difficulty: value })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Servings',
-                        value: attributes.yield,
-                        onChange: (value) => setAttributes({ yield: value })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Prep Time'),
-                    createElement(TextControl, {
-                        value: attributes.prep_time,
-                        onChange: (value) => setAttributes({ prep_time: value })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Cook Time'),
-                    createElement(TextControl, {
-                        value: attributes.cook_time,
-                        onChange: (value) => setAttributes({ cook_time: value })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Total Time'),
-                    createElement(TextControl, {
-                        value: attributes.total_time,
-                        onChange: (value) => setAttributes({ total_time: value })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Ingredients'),
-                    createElement(TextareaControl, {
-                        value: attributes.ingredients,
-                        onChange: (value) => setAttributes({ ingredients: value })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Instructions'),
-                    createElement(TextareaControl, {
-                        value: attributes.instructions,
-                        onChange: (value) => setAttributes({ instructions: value })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Equipment Needed'),
-                    createElement(TextareaControl, {
-                        value: attributes.equipment.join('\n'),
-                        onChange: (value) => setAttributes({ equipment: value.split('\n') })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Recipe Notes'),
-                    createElement(TextareaControl, {
-                        value: attributes.notes.join('\n'),
-                        onChange: (value) => setAttributes({ notes: value.split('\n') })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Keywords'),
-                    createElement(TextareaControl, {
-                        value: attributes.keywords.join('\n'),
-                        onChange: (value) => setAttributes({ keywords: value.split('\n') })
-                    })
-                ]),
-                createElement('div', { style: { marginBottom: '1em' } }, [
-                    createElement('h3', {}, 'Nutrition Information (per serving)'),
-                    createElement(TextControl, {
-                        label: 'Serving Size',
-                        value: attributes.nutrition?.servingSize || '',
-                        disabled: attributes.nutrition?.servingSize?.includes('🥄'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, servingSize: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Number of Servings',
-                        type: attributes.nutrition?.servings?.includes('🍽️') ? 'text' : 'number',
-                        value: attributes.nutrition?.servings || '',
-                        disabled: attributes.nutrition?.servings?.includes('🍽️'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, servings: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Calories',
-                        type: attributes.nutrition?.calories?.includes('🔢') ? 'text' : 'number',
-                        value: attributes.nutrition?.calories || '',
-                        disabled: attributes.nutrition?.calories?.includes('🔢'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, calories: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Total Fat (g)',
-                        type: attributes.nutrition?.fatContent?.includes('📊') ? 'text' : 'number',
-                        value: attributes.nutrition?.fatContent || '',
-                        disabled: attributes.nutrition?.fatContent?.includes('📊'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, fatContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Saturated Fat (g)',
-                        type: attributes.nutrition?.saturatedFatContent?.includes('🥓') ? 'text' : 'number',
-                        value: attributes.nutrition?.saturatedFatContent || '',
-                        disabled: attributes.nutrition?.saturatedFatContent?.includes('🥓'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, saturatedFatContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Cholesterol (mg)',
-                        type: attributes.nutrition?.cholesterolContent?.includes('🍳') ? 'text' : 'number',
-                        value: attributes.nutrition?.cholesterolContent || '',
-                        disabled: attributes.nutrition?.cholesterolContent?.includes('🍳'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, cholesterolContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Sodium (mg)',
-                        type: attributes.nutrition?.sodiumContent?.includes('🧂') ? 'text' : 'number',
-                        value: attributes.nutrition?.sodiumContent || '',
-                        disabled: attributes.nutrition?.sodiumContent?.includes('🧂'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, sodiumContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Total Carbohydrates (g)',
-                        type: attributes.nutrition?.carbohydrateContent?.includes('🍚') ? 'text' : 'number',
-                        value: attributes.nutrition?.carbohydrateContent || '',
-                        disabled: attributes.nutrition?.carbohydrateContent?.includes('🍚'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, carbohydrateContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Dietary Fiber (g)',
-                        type: attributes.nutrition?.fiberContent?.includes('🥬') ? 'text' : 'number',
-                        value: attributes.nutrition?.fiberContent || '',
-                        disabled: attributes.nutrition?.fiberContent?.includes('🥬'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, fiberContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Sugars (g)',
-                        type: attributes.nutrition?.sugarContent?.includes('🍯') ? 'text' : 'number',
-                        value: attributes.nutrition?.sugarContent || '',
-                        disabled: attributes.nutrition?.sugarContent?.includes('🍯'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, sugarContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Protein (g)',
-                        type: attributes.nutrition?.proteinContent?.includes('🥩') ? 'text' : 'number',
-                        value: attributes.nutrition?.proteinContent || '',
-                        disabled: attributes.nutrition?.proteinContent?.includes('🥩'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, proteinContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Vitamin C (%)',
-                        type: attributes.nutrition?.vitaminC?.includes('🍊') ? 'text' : 'number',
-                        value: attributes.nutrition?.vitaminC || '',
-                        disabled: attributes.nutrition?.vitaminC?.includes('🍊'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, vitaminC: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Calcium (%)',
-                        type: attributes.nutrition?.calciumContent?.includes('🥛') ? 'text' : 'number',
-                        value: attributes.nutrition?.calciumContent || '',
-                        disabled: attributes.nutrition?.calciumContent?.includes('🥛'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, calciumContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Iron (%)',
-                        type: attributes.nutrition?.ironContent?.includes('🥬') ? 'text' : 'number',
-                        value: attributes.nutrition?.ironContent || '',
-                        disabled: attributes.nutrition?.ironContent?.includes('🥬'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, ironContent: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Vitamin D (%)',
-                        type: attributes.nutrition?.vitaminD?.includes('☀️') ? 'text' : 'number',
-                        value: attributes.nutrition?.vitaminD || '',
-                        disabled: attributes.nutrition?.vitaminD?.includes('☀️'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, vitaminD: value }
-                        })
-                    }),
-                    createElement(TextControl, {
-                        label: 'Potassium (mg)',
-                        type: attributes.nutrition?.potassiumContent?.includes('🍌') ? 'text' : 'number',
-                        value: attributes.nutrition?.potassiumContent || '',
-                        disabled: attributes.nutrition?.potassiumContent?.includes('🍌'),
-                        onChange: (value) => setAttributes({ 
-                            nutrition: { ...attributes.nutrition, potassiumContent: value }
-                        })
-                    })
-                ])
-            ])
-        ];
-    },
-
-    save: function(props) {
-        const { attributes } = props;
-        
-        // Helper function to format nutrition values
-        const formatNutritionValue = (value, unit) => {
-            if (!value || value === '') return '-';
-            return `${value}${unit}`;
+            return null;
         };
 
-        // Ensure nutrition object exists
-        const nutrition = attributes.nutrition || {};
-        
-        return createElement('div', { className: 'recipe-block' }, [
-            attributes.prep_time && createElement('p', { className: 'prep-time' }, ['Prep Time: ', attributes.prep_time]),
-            attributes.cook_time && createElement('p', { className: 'cook-time' }, ['Cook Time: ', attributes.cook_time]),
-            attributes.total_time && createElement('p', { className: 'total-time' }, ['Total Time: ', attributes.total_time]),
-            attributes.yield && createElement('p', { className: 'recipe-yield' }, ['Servings: ', attributes.yield]),
-            attributes.cuisine && createElement('p', { className: 'recipe-cuisine' }, ['Cuisine: ', attributes.cuisine]),
-            attributes.category && createElement('p', { className: 'recipe-category' }, ['Category: ', attributes.category]),
-            attributes.difficulty && createElement('p', { className: 'recipe-difficulty' }, ['Difficulty: ', attributes.difficulty]),
-            attributes.ingredients && createElement('div', { className: 'recipe-ingredients' }, [
-                createElement('h3', {}, 'Ingredients'),
-                createElement('ul', {},
-                    attributes.ingredients.split('\n').map(
-                        (ingredient) => createElement('li', {}, ingredient)
-                    )
+        const { replaceBlocks } = dispatch('core/block-editor');
+        const { getBlock } = useSelect((select) => select('core/block-editor'));
+
+        async function generateRecipe() {
+            if (isGenerating) return;
+            
+            setIsGenerating(true);
+            setError(null);
+
+            try {
+                if (!postContent) {
+                    throw new Error('Please add some content to your post first.');
+                }
+
+                const response = await apiFetch({
+                    path: '/quill/v1/generate-recipe',
+                    method: 'POST',
+                    data: {
+                        content: postContent,
+                        post_id: postId,
+                        post_title: postTitle,
+                        post_url: postPermalink,
+                        author: author ? {
+                            name: author.name,
+                            url: author.url,
+                            description: author.description
+                        } : null,
+                        media: media ? {
+                            url: media.source_url,
+                            sizes: media.media_details?.sizes
+                        } : null,
+                        generate_nutrition: true // Request nutrition data
+                    }
+                });
+
+                if (response?.success && response?.data) {
+                    const { data } = response;
+                    
+                    console.log('Recipe API Response:', data);
+                    
+                    // Format the recipe data into a text block
+                    const recipeText = formatRecipeText(data);
+                    
+                    // Create blocks array starting with the text content
+                    const blocks = [
+                        createBlock('core/paragraph', {
+                            content: recipeText
+                        })
+                    ];
+
+                    // Create schema data
+                    const schema = createRecipeSchema(data, postPermalink);
+                    
+                    // Add schema block
+                    blocks.push(
+                        createBlock('core/html', {
+                            content: `<!-- Recipe Schema -->
+<script type="application/ld+json">
+${JSON.stringify(schema, null, 2)}
+</script>`
+                        })
+                    );
+
+                    // Get the current block's clientId
+                    const currentBlock = getBlock(props.clientId);
+                    
+                    // Replace the recipe generator block with the new blocks
+                    replaceBlocks(currentBlock.clientId, blocks);
+                } else {
+                    console.error('Invalid API response:', response);
+                    throw new Error('Invalid response from server');
+                }
+            } catch (error) {
+                console.error('Recipe generation failed:', error);
+                setError(error.message || 'Failed to generate recipe. Please try again.');
+            } finally {
+                setIsGenerating(false);
+            }
+        }
+
+        function formatRecipeText(data) {
+            const sections = [];
+
+            // Add ingredients section
+            if (data.ingredients) {
+                sections.push(
+                    '🥘 Ingredients:\n' +
+                    data.ingredients
+                );
+            }
+
+            // Add instructions section
+            if (data.instructions) {
+                const instructionsText = Array.isArray(data.instructions)
+                    ? data.instructions.map((step, index) => `${index + 1}. ${step}`).join('\n')
+                    : data.instructions;
+
+                sections.push('\n\n📝 Instructions:\n' + instructionsText);
+            }
+
+            // Add equipment section if available
+            if (data.equipment) {
+                const equipmentList = Array.isArray(data.equipment)
+                    ? data.equipment.map(item => `• ${item}`).join('\n')
+                    : data.equipment;
+
+                sections.push('\n\n🔪 Equipment Needed:\n' + equipmentList);
+            }
+
+            // Add prep/cook time if available
+            const timeInfo = [];
+            if (data.prep_time) timeInfo.push(`Prep Time: ${data.prep_time}`);
+            if (data.cook_time) timeInfo.push(`Cook Time: ${data.cook_time}`);
+            if (data.total_time) timeInfo.push(`Total Time: ${data.total_time}`);
+            if (timeInfo.length) {
+                sections.push('\n\n⏲️ Timing:\n' + timeInfo.join('\n'));
+            }
+
+            // Add servings if available
+            if (data.yield) {
+                sections.push(`\n\n👥 Servings: ${data.yield}`);
+            }
+
+            // Add cuisine if available
+            if (data.cuisine) {
+                sections.push(`\n\n🌍 Cuisine: ${data.cuisine}`);
+            }
+
+            // Add notes if available
+            if (data.notes) {
+                const notesList = Array.isArray(data.notes)
+                    ? data.notes.map(note => `• ${note}`).join('\n')
+                    : data.notes;
+
+                sections.push('\n\n📌 Notes:\n' + notesList);
+            }
+
+            return sections.join('\n');
+        }
+
+        function createRecipeSchema(data, postUrl) {
+            // Convert ingredients to array if it's a string
+            const ingredients = data.ingredients
+                ? data.ingredients.split('\n').filter(Boolean)
+                : [];
+
+            // Convert instructions to HowToStep objects
+            const instructions = Array.isArray(data.instructions)
+                ? data.instructions
+                : data.instructions.split('\n').filter(Boolean);
+            
+            const instructionSteps = instructions.map((step, index) => ({
+                "@type": "HowToStep",
+                "text": step.replace(/^\d+\.\s*/, ''), // Remove leading numbers
+                "name": step.replace(/^\d+\.\s*/, ''),
+                "url": `${postUrl}#step-${index + 1}`
+            }));
+
+            // Format date in WordPress format
+            const now = new Date();
+            const datePublished = now.toISOString().replace(/\.\d+Z$/, '+00:00');
+
+            // Get video info if available
+            const videoInfo = getVideoInfo(postContent);
+
+            // Get image URLs from media
+            const imageUrls = [];
+            const imageSizes = ['full', 'large', 'medium', 'thumbnail'];
+            if (media?.media_details?.sizes) {
+                imageSizes.forEach(size => {
+                    if (media.media_details.sizes[size]) {
+                        imageUrls.push(media.media_details.sizes[size].source_url);
+                    }
+                });
+            }
+
+            // Get article data
+            const article = {
+                "@type": "Article",
+                "@id": `${postUrl}#article`,
+                "headline": data.name,
+                "datePublished": datePublished,
+                "dateModified": datePublished,
+                "wordCount": postContent.split(/\s+/).length,
+                "commentCount": 0,
+                "thumbnailUrl": imageUrls[0],
+                "keywords": data.article_keywords || data.keywords,
+                "articleSection": data.categories || [],
+                "inLanguage": "en-US"
+            };
+
+            // Get organization data
+            const organization = {
+                "@type": "Organization",
+                "@id": `${window.location.origin}/#organization`,
+                "name": site?.name || '',
+                "url": site?.url || window.location.origin,
+                "description": site?.description,
+                "sameAs": site?.social || [],
+                "logo": site?.logo ? {
+                    "@type": "ImageObject",
+                    "@id": `${window.location.origin}/#/schema/logo/image/`,
+                    "inLanguage": "en-US",
+                    "url": site.logo,
+                    "contentUrl": site.logo,
+                    "width": 1000, // These should come from WordPress
+                    "height": 300,
+                    "caption": site.name
+                } : undefined
+            };
+
+            // Get breadcrumb data
+            const breadcrumb = {
+                "@type": "BreadcrumbList",
+                "@id": `${postUrl}#breadcrumb`,
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": site?.name || "Home",
+                        "item": {
+                            "@type": "Thing",
+                            "@id": site?.url || window.location.origin
+                        }
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Recipes",
+                        "item": {
+                            "@type": "Thing",
+                            "@id": `${site?.url || window.location.origin}/recipes/`
+                        }
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 3,
+                        "name": data.name
+                    }
+                ]
+            };
+
+            // Create the schema object
+            return {
+                "@context": "https://schema.org/",
+                "@type": "Recipe",
+                "@id": `${postUrl}#recipe`,
+                "name": data.name,
+                "description": data.description?.replace(/\[&hellip;\]/, '...'),
+                "datePublished": datePublished,
+                "image": imageUrls,
+                "recipeYield": [
+                    data.yield,
+                    data.yield.match(/\d+/) ? data.yield.match(/\d+/)[0] + " servings" : data.yield
+                ].filter((v, i, a) => a.indexOf(v) === i),
+                "cookTime": data.cook_time,
+                "prepTime": data.prep_time,
+                "totalTime": data.total_time,
+                "recipeIngredient": ingredients,
+                "recipeCategory": data.categories.filter(cat => 
+                    !cat.includes('Low') && !cat.includes('Vegetarian')
+                ),
+                "recipeCuisine": data.cuisine,
+                "keywords": data.keywords?.join(', '),
+                "suitableForDiet": [
+                    ...(data.categories.includes('Low Lactose') ? ["http://schema.org/LowLactoseDiet"] : []),
+                    ...(data.categories.includes('Low Salt') ? ["http://schema.org/LowSaltDiet"] : []),
+                    ...(data.categories.includes('Vegetarian') ? ["http://schema.org/VegetarianDiet"] : []),
+                    ...(data.suitable_diets || [])
+                ],
+                "mainEntityOfPage": {
+                    "@type": "WebPage",
+                    "@id": postUrl
+                },
+                "author": author ? {
+                    "@type": "Person",
+                    "@id": `${window.location.origin}/#/schema/person/${author.id}`,
+                    "name": author.name,
+                    "url": author.url || undefined,
+                    "description": author.description || undefined
+                } : {
+                    "@type": "Person",
+                    "@id": `${window.location.origin}/#/schema/person/author`,
+                    "name": "Recipe Author"
+                },
+                "recipeInstructions": instructionSteps.map((step, index) => ({
+                    "@type": "HowToStep",
+                    "text": step.text,
+                    "name": step.name,
+                    "url": `${postUrl}#wprm-recipe-${postId}-step-0-${index}`,
+                    "image": data.step_images?.[index]
+                })),
+                "nutrition": data.nutrition ? {
+                    "@type": "NutritionInformation",
+                    "calories": data.nutrition.calories,
+                    "carbohydrateContent": data.nutrition.carbohydrates,
+                    "proteinContent": data.nutrition.protein,
+                    "fatContent": data.nutrition.fat,
+                    "saturatedFatContent": data.nutrition.saturated_fat,
+                    "cholesterolContent": data.nutrition.cholesterol,
+                    "sodiumContent": data.nutrition.sodium,
+                    "fiberContent": data.nutrition.fiber,
+                    "sugarContent": data.nutrition.sugar,
+                    "unsaturatedFatContent": data.nutrition.unsaturated_fat,
+                    "servingSize": "1 serving"
+                } : undefined,
+                "video": videoInfo || (data.video ? {
+                    "@type": "VideoObject",
+                    "name": data.video.title,
+                    "description": data.video.description,
+                    "uploadDate": data.video.upload_date,
+                    "duration": data.video.duration,
+                    "thumbnailUrl": data.video.thumbnail_url,
+                    "contentUrl": data.video.content_url,
+                    "embedUrl": data.video.embed_url
+                } : undefined),
+                "isPartOf": {
+                    ...article,
+                    "isPartOf": {
+                        "@type": "WebPage",
+                        "@id": postUrl,
+                        "url": postUrl,
+                        "name": `${data.name} - ${site?.name}`,
+                        "thumbnailUrl": imageUrls[0],
+                        "datePublished": datePublished,
+                        "dateModified": datePublished,
+                        "description": data.description,
+                        "inLanguage": "en-US",
+                        "isPartOf": {
+                            "@type": "WebSite",
+                            "@id": `${window.location.origin}/#website`,
+                            "url": window.location.origin,
+                            "name": site?.name,
+                            "description": site?.description,
+                            "inLanguage": "en-US"
+                        }
+                    }
+                },
+                "publisher": organization,
+                "breadcrumb": breadcrumb,
+                "potentialAction": [
+                    {
+                        "@type": "CommentAction",
+                        "name": "Comment",
+                        "target": {
+                            "@type": "EntryPoint",
+                            "urlTemplate": `${postUrl}#respond`
+                        }
+                    },
+                    {
+                        "@type": "SearchAction",
+                        "target": {
+                            "@type": "EntryPoint",
+                            "urlTemplate": `${window.location.origin}/?s={search_term_string}`
+                        },
+                        "query-input": {
+                            "@type": "PropertyValueSpecification",
+                            "valueRequired": "http://schema.org/True",
+                            "valueName": "search_term_string"
+                        }
+                    }
+                ]
+            };
+        }
+
+        // Sidebar Controls
+        const inspectorControls = createElement(InspectorControls, {},
+            createElement(PanelBody, { 
+                title: __('Recipe Generator', 'quill'),
+                initialOpen: true 
+            },
+                error && createElement(Notice, {
+                    status: 'error',
+                    isDismissible: true,
+                    onRemove: () => setError(null)
+                }, error),
+                
+                createElement(Button, {
+                    isPrimary: true,
+                    onClick: generateRecipe,
+                    disabled: isGenerating,
+                    isBusy: isGenerating,
+                    className: 'generate-recipe-button',
+                    style: { width: '100%', marginBottom: '16px' }
+                }, isGenerating ? __('Generating Recipe...', 'quill') : __('Generate Recipe from Content', 'quill')),
+                
+                createElement('p', { className: 'components-base-control__help' },
+                    __('Click to analyze your post content and generate a structured recipe.', 'quill')
                 )
-            ]),
-            attributes.instructions && createElement('div', { className: 'recipe-instructions' }, [
-                createElement('h3', {}, 'Instructions'),
-                createElement('ol', {},
-                    attributes.instructions.split('\n').map(
-                        (instruction) => createElement('li', {}, instruction)
-                    )
+            )
+        );
+
+        // Main placeholder content
+        const blockContent = createElement('div', { 
+            className: 'wp-block-quill-recipe-placeholder'
+        },
+            createElement('div', { className: 'components-placeholder' },
+                createElement('div', { className: 'components-placeholder__label' },
+                    __('Recipe Generator', 'quill')
+                ),
+                createElement('div', { className: 'components-placeholder__instructions' },
+                    __('Click the "Generate Recipe" button in the sidebar to create a recipe from your post content.', 'quill')
                 )
-            ]),
-            attributes.equipment.length > 0 && createElement('div', { className: 'recipe-equipment' }, [
-                createElement('h3', {}, 'Equipment Needed'),
-                createElement('ul', {},
-                    attributes.equipment.map(
-                        (item) => createElement('li', {}, item)
-                    )
-                )
-            ]),
-            attributes.notes.length > 0 && createElement('div', { className: 'recipe-notes' }, [
-                createElement('h3', {}, 'Recipe Notes'),
-                createElement('ul', {},
-                    attributes.notes.map(
-                        (note) => createElement('li', {}, note)
-                    )
-                )
-            ]),
-            attributes.keywords.length > 0 && createElement('div', { className: 'recipe-keywords' }, [
-                createElement('h3', {}, 'Keywords'),
-                createElement('p', {}, attributes.keywords.join(', '))
-            ]),
-            attributes.nutrition && createElement('div', { 
-                className: 'recipe-nutrition',
-                itemScope: true,
-                itemType: 'https://schema.org/NutritionInformation'
-            }, [
-                createElement('h3', {}, 'Nutrition Information'),
-                createElement('table', { className: 'nutrition-table' }, [
-                    createElement('tbody', {}, [
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Serving Size'),
-                            createElement('td', { itemProp: 'servingSize' }, nutrition.servingSize || '-')
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Number of Servings'),
-                            createElement('td', {}, formatNutritionValue(nutrition.servings, ''))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Calories'),
-                            createElement('td', { itemProp: 'calories' }, formatNutritionValue(nutrition.calories, ''))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Total Fat'),
-                            createElement('td', { itemProp: 'fatContent' }, formatNutritionValue(nutrition.fatContent, 'g'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Saturated Fat'),
-                            createElement('td', { itemProp: 'saturatedFatContent' }, formatNutritionValue(nutrition.saturatedFatContent, 'g'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Cholesterol'),
-                            createElement('td', { itemProp: 'cholesterolContent' }, formatNutritionValue(nutrition.cholesterolContent, 'mg'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Sodium'),
-                            createElement('td', { itemProp: 'sodiumContent' }, formatNutritionValue(nutrition.sodiumContent, 'mg'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Total Carbohydrates'),
-                            createElement('td', { itemProp: 'carbohydrateContent' }, formatNutritionValue(nutrition.carbohydrateContent, 'g'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Dietary Fiber'),
-                            createElement('td', { itemProp: 'fiberContent' }, formatNutritionValue(nutrition.fiberContent, 'g'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Sugars'),
-                            createElement('td', { itemProp: 'sugarContent' }, formatNutritionValue(nutrition.sugarContent, 'g'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Protein'),
-                            createElement('td', { itemProp: 'proteinContent' }, formatNutritionValue(nutrition.proteinContent, 'g'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Vitamin C'),
-                            createElement('td', {}, formatNutritionValue(nutrition.vitaminC, '%'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Calcium'),
-                            createElement('td', {}, formatNutritionValue(nutrition.calciumContent, '%'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Iron'),
-                            createElement('td', {}, formatNutritionValue(nutrition.ironContent, '%'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Vitamin D'),
-                            createElement('td', {}, formatNutritionValue(nutrition.vitaminD, '%'))
-                        ]),
-                        createElement('tr', {}, [
-                            createElement('th', {}, 'Potassium'),
-                            createElement('td', {}, formatNutritionValue(nutrition.potassiumContent, 'mg'))
-                        ])
-                    ])
-                ])
-            ])
-        ]);
+            )
+        );
+
+        return [inspectorControls, blockContent];
+    },
+
+    save: function() {
+        return null; // Content is saved as paragraph and HTML blocks
     }
 }); 
