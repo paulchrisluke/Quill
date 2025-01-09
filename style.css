@@ -19,29 +19,29 @@ Tags: one-column, custom-colors, custom-menu, custom-logo, editor-style, feature
  * https://github.com/WordPress/gutenberg/issues/42319
  */
 a {
-    text-decoration-thickness: 1px !important;
-    text-underline-offset: .1em;
+	text-decoration-thickness: 1px !important;
+	text-underline-offset: .1em;
 }
 
 /* Focus styles */
 :where(.wp-site-blocks *:focus) {
-    outline-width: 2px;
-    outline-style: solid;
+	outline-width: 2px;
+	outline-style: solid;
 }
 
 /* Increase the bottom margin on submenus, so that the outline is visible. */
 .wp-block-navigation .wp-block-navigation-submenu .wp-block-navigation-item:not(:last-child) {
-    margin-bottom: 3px;
+	margin-bottom: 3px;
 }
 
 /* Increase the outline offset on the parent menu items, so that the outline does not touch the text. */
 .wp-block-navigation .wp-block-navigation-item .wp-block-navigation-item__content {
-    outline-offset: 4px;
+	outline-offset: 4px;
 }
 
 /* Remove outline offset from the submenus, otherwise the outline is visible outside the submenu container. */
 .wp-block-navigation .wp-block-navigation-item ul.wp-block-navigation__submenu-container .wp-block-navigation-item__content {
-    outline-offset: 0;
+	outline-offset: 0;
 }
 
 /*
@@ -58,7 +58,7 @@ blockquote,
 caption,
 figcaption,
 p {
-    text-wrap: pretty;
+	text-wrap: pretty;
 }
 
 /*
@@ -66,5 +66,102 @@ p {
  * https://github.com/WordPress/gutenberg/issues/65934
 */
 .more-link {
-    display: block;
+	display: block;
+}
+
+/*
+ * Content container styles
+ */
+.wp-block-post-content {
+	overflow: visible;
+	position: relative;
+}
+
+/* Text content container */
+.wp-block-post-content>*:not(figure) {
+	max-width: 800px;
+	margin-left: auto;
+	margin-right: auto;
+	padding: 0 20px;
+	position: relative;
+	z-index: 2;
+}
+
+/*
+ * Post image styles with organic shapes and overflow effects
+ */
+.wp-block-post-content figure {
+	max-width: 1200px;
+	margin: 3rem auto;
+	padding: 0;
+	position: relative;
+}
+
+.wp-block-post-content img {
+	height: auto;
+	transition: all 0.3s ease;
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+	display: block;
+}
+
+/* Default (no alignment) and centered images */
+.wp-block-post-content .alignnone,
+.wp-block-post-content .aligncenter {
+	width: 100%;
+	max-width: 1000px;
+	margin: 2rem auto;
+	clear: both;
+}
+
+/* Left-aligned images with overflow */
+.wp-block-post-content .alignleft,
+.wp-block-post-content figure.alignleft {
+	float: left;
+	width: 450px;
+	margin-left: -100px;
+	margin-right: 3rem;
+	margin-bottom: 2rem;
+	margin-top: 1rem;
+	transform: rotate(-2deg);
+}
+
+/* Right-aligned images with overflow */
+.wp-block-post-content .alignright,
+.wp-block-post-content figure.alignright {
+	float: right;
+	width: 450px;
+	margin-right: -100px;
+	margin-left: 3rem;
+	margin-bottom: 2rem;
+	margin-top: 1rem;
+	transform: rotate(2deg);
+}
+
+/* Clear floats after aligned images */
+.wp-block-post-content figure.alignleft::after,
+.wp-block-post-content figure.alignright::after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
+/* Add hover effect for interactivity */
+.wp-block-post-content img:hover {
+	transform: scale(1.05) rotate(0deg);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure proper text wrapping around images */
+.wp-block-post-content p {
+	display: flow-root;
+}
+
+/* Container for better spacing control */
+.entry-content,
+.wp-block-post {
+	overflow: visible;
+	position: relative;
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 0 20px;
 }
