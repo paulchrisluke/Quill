@@ -1,280 +1,266 @@
-<?php
-
-/**
- * The header for our theme
- */
-?>
-<!DOCTYPE html>
-<html <?php language_attributes(); ?> amp>
+<!doctype html>
+<html ⚡ <?php language_attributes(); ?>>
 
 <head>
-    <meta charset="<?php bloginfo('charset'); ?>">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
     <script async src="https://cdn.ampproject.org/v0.js"></script>
-    <script async custom-element="amp-sidebar" src="https://cdn.ampproject.org/v0/amp-sidebar-0.1.js"></script>
-    <?php wp_head(); ?>
-    <style amp-custom>
-        /* Layout */
-        @media (min-width: 1024px) {
-            body {
-                display: grid;
-                grid-template-columns: 280px 1fr;
-                grid-template-areas: "header header" "sidebar main";
+    <?php $canonical_url = is_front_page() ? home_url('/') : get_permalink(); ?>
+    <link rel="canonical" href="<?php echo esc_url($canonical_url); ?>">
+
+    <style amp-boilerplate>
+        body {
+            -webkit-animation: -amp-start 8s steps(1, end) 0s 1 normal both;
+            -moz-animation: -amp-start 8s steps(1, end) 0s 1 normal both;
+            -ms-animation: -amp-start 8s steps(1, end) 0s 1 normal both;
+            animation: -amp-start 8s steps(1, end) 0s 1 normal both
+        }
+
+        @-webkit-keyframes -amp-start {
+            from {
+                visibility: hidden
             }
 
-            /* Admin Bar Adjustments */
-            body.admin-bar .site-header {
-                top: 32px;
-            }
-
-            body.admin-bar .desktop-sidebar {
-                top: 92px;
-                /* 60px header + 32px admin bar */
-                height: calc(100vh - 92px);
-            }
-
-            .site-header {
-                grid-area: header;
-            }
-
-            .desktop-sidebar {
-                grid-area: sidebar;
-                display: block;
-                width: 280px;
-                background: #fff;
-                border-right: 1px solid #e4e6eb;
-                height: calc(100vh - 60px);
-                position: fixed;
-                top: 60px;
-                overflow-y: auto;
-            }
-
-            .site-content {
-                grid-area: main;
-                margin-left: 280px;
-                padding: 24px;
-                max-width: 800px;
-            }
-
-            amp-sidebar {
-                display: none;
-            }
-
-            .menu-button {
-                display: none;
+            to {
+                visibility: visible
             }
         }
 
-        @media (max-width: 1023px) {
-            .desktop-sidebar {
-                display: none;
+        @-moz-keyframes -amp-start {
+            from {
+                visibility: hidden
             }
 
-            .site-content {
-                padding: 16px;
-                margin-top: 60px;
+            to {
+                visibility: visible
+            }
+        }
+
+        @-ms-keyframes -amp-start {
+            from {
+                visibility: hidden
             }
 
-            /* Admin Bar Adjustments for Mobile */
-            body.admin-bar .site-header {
-                top: 46px;
+            to {
+                visibility: visible
+            }
+        }
+
+        @-o-keyframes -amp-start {
+            from {
+                visibility: hidden
             }
 
-            body.admin-bar .site-content {
-                margin-top: 106px;
-                /* 60px header + 46px admin bar */
+            to {
+                visibility: visible
             }
+        }
+
+        @keyframes -amp-start {
+            from {
+                visibility: hidden
+            }
+
+            to {
+                visibility: visible
+            }
+        }
+    </style>
+    <noscript>
+        <style amp-boilerplate>
+            body {
+                -webkit-animation: none;
+                -moz-animation: none;
+                -ms-animation: none;
+                animation: none
+            }
+        </style>
+    </noscript>
+
+    <!-- AMP Components -->
+    <script async custom-element="amp-form" src="https://cdn.ampproject.org/v0/amp-form-0.1.js"></script>
+    <script async custom-element="amp-ad" src="https://cdn.ampproject.org/v0/amp-ad-0.1.js"></script>
+
+    <style amp-custom>
+        /* Base styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
 
         /* Header */
         .site-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
             background: #fff;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            z-index: 100;
-        }
-
-        .menu-button {
-            border: none;
-            background: none;
-            font-size: 24px;
-            padding: 8px;
-            cursor: pointer;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .site-branding {
-            margin-left: 16px;
+            margin-bottom: 1rem;
+            text-align: center;
         }
 
-        .site-branding a {
-            color: #262626;
+        .site-title {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .site-title a {
+            color: #333;
             text-decoration: none;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            height: 32px;
-            /* Match icon height */
         }
 
-        .site-icon {
-            border-radius: 8px;
-            display: block;
-            /* Ensure image is displayed */
+        .site-description {
+            margin: 0.5rem 0 0;
+            color: #666;
         }
 
-        /* Sidebar Styles (shared between mobile and desktop) */
-        .sidebar-nav {
-            padding: 16px;
-        }
-
-        .sidebar-nav ul {
+        /* Navigation */
+        .nav-menu {
             list-style: none;
             padding: 0;
             margin: 0;
-        }
-
-        .sidebar-nav li {
-            margin-bottom: 16px;
-        }
-
-        .sidebar-nav a {
             display: flex;
-            align-items: center;
-            color: #262626;
-            text-decoration: none;
-            padding: 8px;
-        }
-
-        .category-letter {
-            width: 32px;
-            height: 32px;
-            background: #e4e6eb;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
+            flex-wrap: wrap;
             justify-content: center;
-            margin-right: 16px;
-            font-weight: bold;
-            color: #262626;
-            text-transform: uppercase;
-            font-size: 14px;
         }
 
-        /* Mobile Sidebar */
-        amp-sidebar {
-            background: #fff;
-            width: 280px;
+        .nav-menu li {
+            margin: 0 10px;
         }
 
-        .sidebar-header {
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0 16px;
-            border-bottom: 1px solid #e4e6eb;
+        .nav-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 5px 0;
         }
 
-        .close-button {
-            border: none;
-            background: none;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 8px;
+        .nav-menu a:hover {
+            color: #0073aa;
+            border-bottom: 2px solid #0073aa;
         }
 
-        /* Main Content */
-        .recipe-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .recipe-card {
-            background: #fff;
-            border: 1px solid #e4e6eb;
-            border-radius: 8px;
+        /* Accessibility */
+        .screen-reader-text {
+            border: 0;
+            clip: rect(1px, 1px, 1px, 1px);
+            clip-path: inset(50%);
+            height: 1px;
+            margin: -1px;
             overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+            word-wrap: normal;
         }
 
-        .recipe-card-header {
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .screen-reader-text:focus {
+            background-color: #f1f1f1;
+            border-radius: 3px;
+            box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.6);
+            clip: auto;
+            clip-path: none;
+            color: #21759b;
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            height: auto;
+            left: 5px;
+            line-height: normal;
+            padding: 15px 23px 14px;
+            text-decoration: none;
+            top: 5px;
+            width: auto;
+            z-index: 100000;
         }
 
-        .recipe-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .nav-menu {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .nav-menu li {
+                margin: 5px 0;
+            }
         }
 
-        .author-meta {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.9em;
-        }
-
-        .author-name {
-            font-weight: 600;
-        }
-
-        .posted-date {
-            color: #8e8e8e;
+        /* AMP Ad Container */
+        .amp-ad-container {
+            background: #f8f8f8;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
         }
     </style>
+
+    <?php wp_head(); ?>
 </head>
 
 <body <?php body_class(); ?>>
     <?php wp_body_open(); ?>
 
-    <!-- Header -->
+    <a class="skip-link screen-reader-text" href="#content">
+        <?php esc_html_e('Skip to content', 'quill'); ?>
+    </a>
+
     <header class="site-header">
-        <button on="tap:sidebar.toggle" class="menu-button" aria-label="Menu">☰</button>
-        <div class="site-branding">
-            <a href="<?php echo esc_url(home_url('/')); ?>">
-                <?php
-                $site_icon_url = get_site_icon_url(32);
-                if ($site_icon_url): ?>
-                    <amp-img src="<?php echo esc_url($site_icon_url); ?>"
-                        width="32"
-                        height="32"
-                        alt="<?php echo esc_attr(get_bloginfo('name')); ?>"
-                        class="site-icon"
-                        fallback="🍽️">
-                    </amp-img>
-                <?php else: ?>
-                    <span class="site-icon-fallback">🍽️</span>
-                    <?php bloginfo('name'); ?>
+        <div class="container">
+            <div class="site-branding">
+                <?php if (has_custom_logo()) : ?>
+                    <div class="site-logo">
+                        <?php the_custom_logo(); ?>
+                    </div>
                 <?php endif; ?>
-            </a>
+
+                <?php if (display_header_text()) : ?>
+                    <h1 class="site-title">
+                        <a href="<?php echo esc_url(home_url('/')); ?>">
+                            <?php bloginfo('name'); ?>
+                        </a>
+                    </h1>
+
+                    <?php
+                    $description = get_bloginfo('description', 'display');
+                    if ($description) : ?>
+                        <p class="site-description"><?php echo $description; ?></p>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+
+            <nav class="site-navigation">
+                <?php
+                wp_nav_menu(array(
+                    'theme_location' => 'primary',
+                    'menu_class'     => 'nav-menu',
+                    'container'      => false,
+                    'fallback_cb'    => false,
+                ));
+                ?>
+            </nav>
         </div>
+
+        <?php if (function_exists('quill_adsense_header')) : ?>
+            <div class="amp-ad-container">
+                <?php quill_adsense_header(); ?>
+            </div>
+        <?php endif; ?>
     </header>
 
-    <!-- Desktop Sidebar -->
-    <div class="desktop-sidebar">
-        <nav class="sidebar-nav">
-            <?php get_template_part('template-parts/sidebar-content'); ?>
-        </nav>
-    </div>
-
-    <!-- Mobile Sidebar -->
-    <amp-sidebar id="sidebar" layout="nodisplay" side="left">
-        <div class="sidebar-header">
-            <button on="tap:sidebar.close" class="close-button">✕</button>
-        </div>
-        <nav class="sidebar-nav">
-            <?php get_template_part('template-parts/sidebar-content'); ?>
-        </nav>
-    </amp-sidebar>
-
-    <!-- Main Content -->
-    <main class="site-content">
+    <div id="content" class="site-content">
+        <div class="container">

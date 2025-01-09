@@ -1,0 +1,28 @@
+{
+    "name": "quill",
+    "version": "1.0.0",
+    "description": "AMP-first WordPress Recipe Theme",
+    "scripts": {
+        "build": "wp-scripts build assets/js/blocks/recipe/index.js --output-path=assets/js/blocks/recipe/build",
+        "start": "wp-scripts start assets/js/blocks/recipe/index.js --output-path=assets/js/blocks/recipe/build",
+        "amp:validate": "gulp amp:validate",
+        "amp:watch": "gulp amp:watch",
+        "amp:validate-url": "gulp amp:validate-url"
+    },
+    "devDependencies": {
+        "@wordpress/scripts": "^26.0.0",
+        "amphtml-validator": "^1.0.35",
+        "browser-sync": "^2.29.3",
+        "gulp": "^4.0.2",
+        "node-fetch": "^2.6.12"
+    },
+    "main": "index.js",
+    "keywords": [
+        "wordpress",
+        "theme",
+        "amp",
+        "recipe"
+    ],
+    "author": "",
+    "license": "GPL-2.0-or-later"
+}

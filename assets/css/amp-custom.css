@@ -1,0 +1,119 @@
+/**
+ * AMP Custom Styles
+ */
+
+/* AdSense Containers */
+.ad-container {
+    background-color: #e8f5e9;
+    /* Light green background */
+    border: 2px dashed #4caf50;
+    /* Green dashed border */
+    padding: 10px;
+    margin: 20px 0;
+    text-align: center;
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ad-container::before {
+    content: "Advertisement";
+    display: block;
+    color: #2e7d32;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+/* Header Ad */
+.ad-header {
+    max-width: 728px;
+    height: 90px;
+    margin: 20px auto;
+}
+
+/* Content Ad */
+.ad-content {
+    max-width: 336px;
+    height: 280px;
+    margin: 20px auto;
+    float: right;
+}
+
+/* Sidebar Ad */
+.ad-sidebar {
+    max-width: 300px;
+    height: 250px;
+    margin: 20px auto;
+}
+
+/* Recipe Layout */
+.recipe-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.recipe-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.recipe-meta {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.recipe-meta-item {
+    text-align: center;
+    padding: 10px;
+}
+
+.recipe-ingredients {
+    margin: 30px 0;
+}
+
+.recipe-instructions {
+    margin: 30px 0;
+}
+
+/* AMP Specific Styles */
+amp-img {
+    max-width: 100%;
+    height: auto;
+}
+
+amp-carousel {
+    margin: 20px 0;
+}
+
+amp-sidebar {
+    width: 300px;
+    background: white;
+    padding: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .ad-header {
+        height: 50px;
+    }
+
+    .ad-content {
+        float: none;
+        margin: 20px auto;
+    }
+
+    .recipe-meta {
+        flex-direction: column;
+    }
+
+    .recipe-meta-item {
+        width: 100%;
+        margin: 5px 0;
+    }
+}

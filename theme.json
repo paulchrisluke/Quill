@@ -1,0 +1,159 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/theme.json",
+    "version": 2,
+    "settings": {
+        "color": {
+            "palette": [
+                {
+                    "slug": "primary",
+                    "color": "#2E7D32",
+                    "name": "Primary"
+                },
+                {
+                    "slug": "secondary",
+                    "color": "#4CAF50",
+                    "name": "Secondary"
+                },
+                {
+                    "slug": "accent",
+                    "color": "#8BC34A",
+                    "name": "Accent"
+                },
+                {
+                    "slug": "background",
+                    "color": "#FFFFFF",
+                    "name": "Background"
+                },
+                {
+                    "slug": "text",
+                    "color": "#333333",
+                    "name": "Text"
+                }
+            ],
+            "gradients": [],
+            "custom": true,
+            "customGradient": true,
+            "link": true
+        },
+        "typography": {
+            "fontSizes": [
+                {
+                    "slug": "small",
+                    "size": "14px",
+                    "name": "Small"
+                },
+                {
+                    "slug": "medium",
+                    "size": "16px",
+                    "name": "Medium"
+                },
+                {
+                    "slug": "large",
+                    "size": "24px",
+                    "name": "Large"
+                },
+                {
+                    "slug": "x-large",
+                    "size": "32px",
+                    "name": "Extra Large"
+                }
+            ],
+            "fontFamilies": [
+                {
+                    "fontFamily": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif",
+                    "slug": "system",
+                    "name": "System Font"
+                }
+            ]
+        },
+        "spacing": {
+            "padding": true,
+            "margin": true,
+            "units": ["px", "em", "rem", "%"]
+        },
+        "layout": {
+            "contentSize": "800px",
+            "wideSize": "1100px"
+        },
+        "custom": {
+            "ad-spaces": {
+                "header": {
+                    "height": "90px",
+                    "width": "728px"
+                },
+                "sidebar": {
+                    "height": "600px",
+                    "width": "300px"
+                },
+                "content": {
+                    "height": "250px",
+                    "width": "300px"
+                }
+            },
+            "recipe": {
+                "meta-spacing": "1rem",
+                "ingredient-spacing": "0.5rem",
+                "step-spacing": "1.5rem"
+            }
+        }
+    },
+    "styles": {
+        "color": {
+            "background": "var(--wp--preset--color--background)",
+            "text": "var(--wp--preset--color--text)"
+        },
+        "typography": {
+            "fontSize": "var(--wp--preset--font-size--medium)",
+            "fontFamily": "var(--wp--preset--font-family--system)",
+            "lineHeight": "1.6"
+        },
+        "elements": {
+            "link": {
+                "color": {
+                    "text": "var(--wp--preset--color--primary)"
+                }
+            },
+            "h1": {
+                "typography": {
+                    "fontSize": "var(--wp--preset--font-size--x-large)"
+                }
+            },
+            "h2": {
+                "typography": {
+                    "fontSize": "var(--wp--preset--font-size--large)"
+                }
+            }
+        },
+        "blocks": {
+            "core/recipe": {
+                "spacing": {
+                    "padding": {
+                        "top": "2rem",
+                        "bottom": "2rem"
+                    }
+                }
+            }
+        }
+    },
+    "customTemplates": [
+        {
+            "name": "recipe-full-width",
+            "title": "Recipe Full Width",
+            "postTypes": ["post"]
+        }
+    ],
+    "templateParts": [
+        {
+            "name": "header",
+            "area": "header"
+        },
+        {
+            "name": "footer",
+            "area": "footer"
+        },
+        {
+            "name": "sidebar",
+            "area": "sidebar"
+        }
+    ]
+} 

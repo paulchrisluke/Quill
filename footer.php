@@ -1,35 +1,46 @@
-        </div><!-- .container -->
-        </div><!-- .site-content -->
+<?php
 
-        <footer class="site-footer">
-            <div class="container">
-                <div class="footer-content">
-                    <div class="footer-widgets">
-                        <?php if (is_active_sidebar('footer-1')): ?>
-                            <div class="footer-widget-area">
-                                <?php dynamic_sidebar('footer-1'); ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+/**
+ * The template for displaying the footer
+ *
+ * @package Quill
+ */
 
-                    <nav class="footer-navigation">
-                        <?php
-                        wp_nav_menu(array(
-                            'theme_location' => 'footer',
-                            'menu_class' => 'footer-menu',
-                            'container' => false,
-                        ));
-                        ?>
-                    </nav>
+if (! defined('ABSPATH')) {
+    exit;
+}
+?>
+</div><!-- .container -->
+</div><!-- #content -->
 
-                    <div class="site-info">
-                        <p>&copy; <?php echo date('Y'); ?> <?php bloginfo('name'); ?>. All rights reserved.</p>
-                    </div>
-                </div>
-            </div>
-        </footer>
+<footer class="site-footer">
+    <div class="container">
+        <nav class="footer-navigation">
+            <?php
+            wp_nav_menu(array(
+                'theme_location' => 'footer',
+                'menu_class'     => 'nav-menu',
+                'container'      => false,
+                'fallback_cb'    => false,
+                'depth'          => 1,
+                'walker'         => new Quill_AMP_Nav_Walker(),
+            ));
+            ?>
+        </nav>
 
-        <?php wp_footer(); ?>
-        </body>
+        <div class="site-info">
+            <p>&copy; <?php echo date('Y'); ?> <?php bloginfo('name'); ?>.
+                <?php
+                printf(
+                    /* translators: %s: WordPress. */
+                    esc_html__('Proudly powered by %s', 'quill'),
+                    '<a href="https://wordpress.org/">WordPress</a>'
+                );
+                ?>
+            </p>
+        </div>
+    </div>
+</footer>
+</body>
 
-        </html>
+</html>
