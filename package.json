@@ -1,28 +1,44 @@
 {
-    "name": "quill",
-    "version": "1.0.0",
-    "description": "AMP-first WordPress Recipe Theme",
-    "scripts": {
-        "build": "wp-scripts build assets/js/blocks/recipe/index.js --output-path=assets/js/blocks/recipe/build",
-        "start": "wp-scripts start assets/js/blocks/recipe/index.js --output-path=assets/js/blocks/recipe/build",
-        "amp:validate": "gulp amp:validate",
-        "amp:watch": "gulp amp:watch",
-        "amp:validate-url": "gulp amp:validate-url"
-    },
-    "devDependencies": {
-        "@wordpress/scripts": "^26.0.0",
-        "amphtml-validator": "^1.0.35",
-        "browser-sync": "^2.29.3",
-        "gulp": "^4.0.2",
-        "node-fetch": "^2.6.12"
-    },
-    "main": "index.js",
-    "keywords": [
-        "wordpress",
-        "theme",
-        "amp",
-        "recipe"
-    ],
-    "author": "",
-    "license": "GPL-2.0-or-later"
+	"name": "twentytwentyfive",
+	"private": true,
+	"version": "0.0.1",
+	"description": "The default WordPress theme for 2025",
+	"author": "WordPress",
+	"license": "GPL-2.0-or-later",
+	"keywords": [
+		"WordPress",
+		"theme"
+	],
+	"homepage": "https://github.com/WordPress/twentytwentyfive#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/WordPress/twentytwentyfive.git"
+	},
+	"bugs": {
+		"url": "https://github.com/WordPress/twentytwentyfive/issues"
+	},
+	"engines": {
+		"node": ">=20.10.0",
+		"npm": ">=10.2.3"
+	},
+	"devDependencies": {
+		"@wordpress/stylelint-config": "^22.5.0",
+		"ajv": "^8.17.1",
+		"ajv-draft-04": "^1.0.0",
+		"chalk": "^5.3.0",
+		"fast-glob": "^3.3.2",
+		"parse5-html-rewriting-stream": "^7.0.0",
+		"semver": "^7.6.3",
+		"string-progressbar": "^1.0.4",
+		"stylelint": "^14.16.1",
+		"table": "^6.8.2"
+	},
+	"scripts": {
+		"lint:css": "stylelint **/*.css -i .gitignore",
+		"lint:css:fix": "stylelint **/*.css -i .gitignore --fix",
+		"lint:php": "composer run-script lint",
+		"lint:php:fix": "composer run-script format",
+		"lint:theme": "node theme-utils.mjs validate-theme",
+		"lint:patterns:fix": "node theme-utils.mjs escape-patterns --text-domain=twentytwentyfive"
+	}
 }
