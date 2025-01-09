@@ -125,11 +125,15 @@ function quill_buffer_end()
         $html = preg_replace('/<style(?![^>]*amp-boilerplate)[^>]*>.*?<\/style>/s', '', $html);
     }
 
-    // Add combined styles back with amp-custom attribute
-    if (!empty($styles)) {
+    // Add combined styles back with amp-custom attribute, but only if not already present
+    if (!empty($styles) && !strpos($html, 'amp-custom')) {
         $styles = '<style amp-custom>' . $styles . '</style>';
-        // Insert after boilerplate styles
-        $html = preg_replace('/<\/style>\s*<\/noscript>/', '</style></noscript>' . $styles, $html);
+        // Insert after last style tag or before </head>
+        if (strpos($html, '</style>') !== false) {
+            $html = preg_replace('/<\/style>(?!.*<\/style>)/s', '</style>' . $styles, $html);
+        } else {
+            $html = str_replace('</head>', $styles . '</head>', $html);
+        }
     }
 
     echo $html;
@@ -330,7 +334,35 @@ function quill_fix_urls($content)
 add_filter('the_content', 'quill_fix_urls', 5);
 add_filter('widget_text_content', 'quill_fix_urls', 5);
 
+/**
+ * Print minimal AMP-compatible styles
+ */
+function quill_print_amp_styles()
+{
+    // Minimal required styles for AMP compatibility
+    $styles = '
+        /* Basic AMP styles */
+        amp-img {
+            max-width: 100%;
+            height: auto;
+        }
+        /* Ad container styles */
+        .ad-container {
+            background-color: #e8f5e9;
+            border: 2px dashed #4caf50;
+            padding: 10px;
+            margin: 20px 0;
+            text-align: center;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    ';
+
+    echo '<style amp-custom>' . trim($styles) . '</style>';
+}
+
 // Load required files
 require_once QUILL_DIR . '/includes/template-tags.php';
 require_once QUILL_DIR . '/includes/customizer/class-quill-customizer.php';
-require_once QUILL_DIR . '/amp-styles.php';

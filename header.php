@@ -74,19 +74,11 @@
                 visibility: visible
             }
         }
-    </style><noscript>
-        <style amp-boilerplate>
-            body {
-                -webkit-animation: none;
-                -moz-animation: none;
-                -ms-animation: none;
-                animation: none
-            }
-        </style>
+    </style>
     </noscript>
 
-    <?php quill_print_amp_styles(); ?>
     <?php wp_head(); ?>
+    <?php quill_print_amp_styles(); ?>
 
     <link rel="canonical" href="<?php echo esc_url(get_permalink()); ?>" />
 </head>
