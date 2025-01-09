@@ -21,12 +21,11 @@ get_header();
 
             get_template_part('template-parts/content', 'page');
 
-            if (! quill_is_amp()) {
-                quill_adsense_ad('content');
-            }
+            // Display AMP-compatible ad
+            get_template_part('template-parts/ads/adsense', 'content');
 
             // If comments are open or we have at least one comment, load up the comment template.
-            if (! quill_is_amp() && (comments_open() || get_comments_number())) :
+            if (comments_open() || get_comments_number()) :
                 comments_template();
             endif;
 

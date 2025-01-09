@@ -12,17 +12,13 @@
         <div class="entry-thumbnail">
             <a href="<?php the_permalink(); ?>">
                 <?php
-                if (quill_is_amp()) {
-                    $image_data = wp_get_attachment_image_src(get_post_thumbnail_id(), 'medium');
-                    if ($image_data) {
-                        echo '<amp-img src="' . esc_url($image_data[0]) . '"
-                            width="' . esc_attr($image_data[1]) . '"
-                            height="' . esc_attr($image_data[2]) . '"
-                            layout="responsive"
-                            alt="' . esc_attr(get_the_title()) . '"></amp-img>';
-                    }
-                } else {
-                    the_post_thumbnail('medium', array('class' => 'entry-image'));
+                $image_data = wp_get_attachment_image_src(get_post_thumbnail_id(), 'medium');
+                if ($image_data) {
+                    echo '<amp-img src="' . esc_url($image_data[0]) . '"
+                        width="' . esc_attr($image_data[1]) . '"
+                        height="' . esc_attr($image_data[2]) . '"
+                        layout="responsive"
+                        alt="' . esc_attr(get_the_title()) . '"></amp-img>';
                 }
                 ?>
             </a>

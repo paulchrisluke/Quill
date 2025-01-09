@@ -309,7 +309,7 @@ function quill_recipe_meta($post = null)
 
     $output .= '</div>';
 
-    echo apply_filters('quill_recipe_meta_html', $output, $meta); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 
 /**
@@ -324,23 +324,14 @@ function quill_recipe_ingredients($post = null)
         return;
     }
 
-    $output = '<div class="recipe-ingredients">';
-    $output .= '<h3>' . esc_html__('Ingredients', 'quill') . '</h3>';
-    $output .= '<ul class="ingredients-list">';
-
+    echo '<div class="recipe-ingredients">';
+    echo '<h2>' . esc_html__('Ingredients', 'quill') . '</h2>';
+    echo '<ul>';
     foreach ($ingredients as $ingredient) {
-        $output .= sprintf(
-            '<li class="ingredient-item"><span class="amount">%1$s</span> <span class="unit">%2$s</span> <span class="name">%3$s</span></li>',
-            esc_html($ingredient['amount']),
-            esc_html($ingredient['unit']),
-            esc_html($ingredient['name'])
-        );
+        echo '<li>' . esc_html($ingredient) . '</li>';
     }
-
-    $output .= '</ul>';
-    $output .= '</div>';
-
-    echo apply_filters('quill_recipe_ingredients_html', $output, $ingredients); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo '</ul>';
+    echo '</div>';
 }
 
 /**
@@ -355,21 +346,14 @@ function quill_recipe_instructions($post = null)
         return;
     }
 
-    $output = '<div class="recipe-instructions">';
-    $output .= '<h3>' . esc_html__('Instructions', 'quill') . '</h3>';
-    $output .= '<ol class="instructions-list">';
-
+    echo '<div class="recipe-instructions">';
+    echo '<h2>' . esc_html__('Instructions', 'quill') . '</h2>';
+    echo '<ol>';
     foreach ($instructions as $instruction) {
-        $output .= sprintf(
-            '<li class="instruction-item">%s</li>',
-            wp_kses_post($instruction)
-        );
+        echo '<li>' . wp_kses_post($instruction) . '</li>';
     }
-
-    $output .= '</ol>';
-    $output .= '</div>';
-
-    echo apply_filters('quill_recipe_instructions_html', $output, $instructions); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo '</ol>';
+    echo '</div>';
 }
 
 /**
@@ -384,12 +368,10 @@ function quill_recipe_notes($post = null)
         return;
     }
 
-    $output = '<div class="recipe-notes">';
-    $output .= '<h3>' . esc_html__('Notes', 'quill') . '</h3>';
-    $output .= wp_kses_post(wpautop($notes));
-    $output .= '</div>';
-
-    echo apply_filters('quill_recipe_notes_html', $output, $notes); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo '<div class="recipe-notes">';
+    echo '<h2>' . esc_html__('Notes', 'quill') . '</h2>';
+    echo wp_kses_post($notes);
+    echo '</div>';
 }
 
 /**
@@ -404,144 +386,46 @@ function quill_recipe_nutrition($post = null)
         return;
     }
 
-    $output = '<div class="recipe-nutrition">';
-    $output .= '<h3>' . esc_html__('Nutrition Information', 'quill') . '</h3>';
-    $output .= '<div class="nutrition-grid">';
+    echo '<div class="recipe-nutrition">';
+    echo '<h2>' . esc_html__('Nutrition Information', 'quill') . '</h2>';
+    echo '<ul>';
 
     if (! empty($nutrition['calories'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item calories"><span class="label">%1$s</span><span class="value">%2$s</span></div>',
-            esc_html__('Calories:', 'quill'),
-            esc_html($nutrition['calories'])
-        );
+        echo '<li><strong>' . esc_html__('Calories:', 'quill') . '</strong> ' . esc_html($nutrition['calories']) . '</li>';
     }
 
     if (! empty($nutrition['fat'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item fat"><span class="label">%1$s</span><span class="value">%2$sg</span></div>',
-            esc_html__('Fat:', 'quill'),
-            esc_html($nutrition['fat'])
-        );
+        echo '<li><strong>' . esc_html__('Fat:', 'quill') . '</strong> ' . esc_html($nutrition['fat']) . '</li>';
     }
 
     if (! empty($nutrition['saturated_fat'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item saturated-fat"><span class="label">%1$s</span><span class="value">%2$sg</span></div>',
-            esc_html__('Saturated Fat:', 'quill'),
-            esc_html($nutrition['saturated_fat'])
-        );
+        echo '<li><strong>' . esc_html__('Saturated Fat:', 'quill') . '</strong> ' . esc_html($nutrition['saturated_fat']) . '</li>';
     }
 
     if (! empty($nutrition['cholesterol'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item cholesterol"><span class="label">%1$s</span><span class="value">%2$smg</span></div>',
-            esc_html__('Cholesterol:', 'quill'),
-            esc_html($nutrition['cholesterol'])
-        );
+        echo '<li><strong>' . esc_html__('Cholesterol:', 'quill') . '</strong> ' . esc_html($nutrition['cholesterol']) . '</li>';
     }
 
     if (! empty($nutrition['sodium'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item sodium"><span class="label">%1$s</span><span class="value">%2$smg</span></div>',
-            esc_html__('Sodium:', 'quill'),
-            esc_html($nutrition['sodium'])
-        );
+        echo '<li><strong>' . esc_html__('Sodium:', 'quill') . '</strong> ' . esc_html($nutrition['sodium']) . '</li>';
     }
 
     if (! empty($nutrition['carbohydrates'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item carbohydrates"><span class="label">%1$s</span><span class="value">%2$sg</span></div>',
-            esc_html__('Carbohydrates:', 'quill'),
-            esc_html($nutrition['carbohydrates'])
-        );
+        echo '<li><strong>' . esc_html__('Carbohydrates:', 'quill') . '</strong> ' . esc_html($nutrition['carbohydrates']) . '</li>';
     }
 
     if (! empty($nutrition['fiber'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item fiber"><span class="label">%1$s</span><span class="value">%2$sg</span></div>',
-            esc_html__('Fiber:', 'quill'),
-            esc_html($nutrition['fiber'])
-        );
+        echo '<li><strong>' . esc_html__('Fiber:', 'quill') . '</strong> ' . esc_html($nutrition['fiber']) . '</li>';
     }
 
     if (! empty($nutrition['sugar'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item sugar"><span class="label">%1$s</span><span class="value">%2$sg</span></div>',
-            esc_html__('Sugar:', 'quill'),
-            esc_html($nutrition['sugar'])
-        );
+        echo '<li><strong>' . esc_html__('Sugar:', 'quill') . '</strong> ' . esc_html($nutrition['sugar']) . '</li>';
     }
 
     if (! empty($nutrition['protein'])) {
-        $output .= sprintf(
-            '<div class="nutrition-item protein"><span class="label">%1$s</span><span class="value">%2$sg</span></div>',
-            esc_html__('Protein:', 'quill'),
-            esc_html($nutrition['protein'])
-        );
+        echo '<li><strong>' . esc_html__('Protein:', 'quill') . '</strong> ' . esc_html($nutrition['protein']) . '</li>';
     }
 
-    $output .= '</div>';
-    $output .= '</div>';
-
-    echo apply_filters('quill_recipe_nutrition_html', $output, $nutrition); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-}
-
-/**
- * Check if current request is AMP
- *
- * @return bool Whether current request is AMP.
- */
-function quill_is_amp()
-{
-    return function_exists('amp_is_request') && amp_is_request();
-}
-
-/**
- * Get AdSense settings
- *
- * @return array AdSense settings.
- */
-function quill_get_adsense_settings()
-{
-    $settings = get_option('quill_adsense_settings', array());
-    $defaults = array(
-        'publisher_id' => '',
-        'slots'        => array(
-            'header'        => '',
-            'sidebar'       => '',
-            'content'       => '',
-            'recipe_top'    => '',
-            'recipe_bottom' => '',
-        ),
-    );
-
-    return wp_parse_args($settings, $defaults);
-}
-
-/**
- * Display AdSense ad
- *
- * @param string $slot Ad slot identifier.
- */
-function quill_adsense_ad($slot)
-{
-    $settings = quill_get_adsense_settings();
-    if (empty($settings['publisher_id']) || empty($settings['slots'][$slot])) {
-        return;
-    }
-
-    if (quill_is_amp()) {
-        printf(
-            '<amp-ad width="100vw" height="320" type="adsense" data-ad-client="ca-%1$s" data-ad-slot="%2$s" data-auto-format="rspv" data-full-width><div overflow></div></amp-ad>',
-            esc_attr($settings['publisher_id']),
-            esc_attr($settings['slots'][$slot])
-        );
-    } else {
-        printf(
-            '<div class="adsense-ad %1$s"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-%2$s" data-ad-slot="%3$s" data-ad-format="auto" data-full-width-responsive="true"></ins></div>',
-            esc_attr($slot),
-            esc_attr($settings['publisher_id']),
-            esc_attr($settings['slots'][$slot])
-        );
-    }
+    echo '</ul>';
+    echo '</div>';
 }

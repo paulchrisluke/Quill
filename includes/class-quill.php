@@ -44,7 +44,21 @@ class Quill
     {
         $this->load_files();
         add_action('after_setup_theme', array($this, 'init'));
-        add_action('after_setup_theme', array($this, 'setup_amp_support'));
+
+        // Remove features that conflict with AMP
+        add_action('init', array($this, 'remove_conflicting_features'));
+    }
+
+    /**
+     * Remove features that conflict with AMP
+     */
+    private function remove_conflicting_features()
+    {
+        // Remove jQuery and other default scripts
+        wp_dequeue_script('jquery');
+        wp_deregister_script('jquery');
+        wp_dequeue_script('wp-embed');
+        wp_deregister_script('wp-embed');
     }
 
     /**
@@ -78,152 +92,6 @@ class Quill
         if (is_admin()) {
             require_once QUILL_DIR . '/includes/admin/class-quill-recipe-meta.php';
         }
-    }
-
-    /**
-     * Setup native AMP support
-     */
-    private function setup_amp_support()
-    {
-        // Remove features that conflict with AMP
-        remove_action('wp_head', 'wp_generator');
-        remove_action('wp_head', 'wlwmanifest_link');
-        remove_action('wp_head', 'rsd_link');
-        remove_action('wp_head', 'wp_shortlink_wp_head');
-        remove_action('wp_head', 'adjacent_posts_rel_link_wp_head', 10);
-        remove_action('wp_head', 'print_emoji_detection_script', 7);
-        remove_action('wp_print_styles', 'print_emoji_styles');
-        remove_action('wp_head', 'wp_resource_hints', 2);
-        remove_action('wp_head', 'rest_output_link_wp_head');
-        remove_action('wp_head', 'wp_oembed_add_discovery_links');
-        remove_action('wp_head', 'wp_oembed_add_host_js');
-
-        // Remove jQuery and other default scripts
-        add_action('wp_enqueue_scripts', function () {
-            wp_dequeue_script('jquery');
-            wp_deregister_script('jquery');
-            wp_dequeue_script('wp-embed');
-            wp_deregister_script('wp-embed');
-        }, 100);
-
-        // Add AMP meta tags and scripts
-        add_action('wp_head', array($this, 'add_amp_head'));
-
-        // Add AMP styles
-        add_action('wp_head', array($this, 'add_amp_styles'));
-
-        // Force HTTPS
-        add_filter('the_content', array($this, 'force_https_urls'));
-        add_filter('widget_text_content', array($this, 'force_https_urls'));
-        add_filter('wp_get_attachment_url', array($this, 'force_https_urls'));
-
-        // Add AMP body class
-        add_filter('body_class', array($this, 'add_amp_body_classes'));
-    }
-
-    /**
-     * Add AMP head elements
-     */
-    public function add_amp_head()
-    {
-        if (is_admin()) {
-            return;
-        }
-?>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
-        <script async src="https://cdn.ampproject.org/v0.js"></script>
-        <script async custom-element="amp-form" src="https://cdn.ampproject.org/v0/amp-form-0.1.js"></script>
-        <script async custom-element="amp-sidebar" src="https://cdn.ampproject.org/v0/amp-sidebar-0.1.js"></script>
-        <script async custom-element="amp-carousel" src="https://cdn.ampproject.org/v0/amp-carousel-0.1.js"></script>
-        <script async custom-element="amp-image-lightbox" src="https://cdn.ampproject.org/v0/amp-image-lightbox-0.1.js"></script>
-        <script async custom-element="amp-analytics" src="https://cdn.ampproject.org/v0/amp-analytics-0.1.js"></script>
-        <script async custom-element="amp-ad" src="https://cdn.ampproject.org/v0/amp-ad-0.1.js"></script>
-        <link rel="canonical" href="<?php echo esc_url(get_permalink()); ?>">
-        <style amp-custom>
-            <?php include_once QUILL_DIR . '/assets/css/amp-custom.css'; ?>
-        </style>
-    <?php
-    }
-
-    /**
-     * Add AMP boilerplate styles
-     */
-    public function add_amp_styles()
-    {
-        if (is_admin()) {
-            return;
-        }
-    ?>
-        <style amp-boilerplate>
-            body {
-                -webkit-animation: -amp-start 8s steps(1, end) 0s 1 normal both;
-                -moz-animation: -amp-start 8s steps(1, end) 0s 1 normal both;
-                -ms-animation: -amp-start 8s steps(1, end) 0s 1 normal both;
-                animation: -amp-start 8s steps(1, end) 0s 1 normal both
-            }
-
-            @-webkit-keyframes -amp-start {
-                from {
-                    visibility: hidden
-                }
-
-                to {
-                    visibility: visible
-                }
-            }
-
-            @-moz-keyframes -amp-start {
-                from {
-                    visibility: hidden
-                }
-
-                to {
-                    visibility: visible
-                }
-            }
-
-            @-ms-keyframes -amp-start {
-                from {
-                    visibility: hidden
-                }
-
-                to {
-                    visibility: visible
-                }
-            }
-
-            @-o-keyframes -amp-start {
-                from {
-                    visibility: hidden
-                }
-
-                to {
-                    visibility: visible
-                }
-            }
-
-            @keyframes -amp-start {
-                from {
-                    visibility: hidden
-                }
-
-                to {
-                    visibility: visible
-                }
-            }
-        </style>
-        <noscript>
-            <style amp-boilerplate>
-                body {
-                    -webkit-animation: none;
-                    -moz-animation: none;
-                    -ms-animation: none;
-                    animation: none
-                }
-            </style>
-        </noscript>
-<?php
     }
 
     /**

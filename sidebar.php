@@ -16,9 +16,6 @@ if (! is_active_sidebar('sidebar-1')) {
 ?>
 
 <aside id="secondary" class="widget-area">
-    <?php if (! quill_is_amp()) : ?>
-        <?php quill_adsense_ad('sidebar'); ?>
-    <?php endif; ?>
-
+    <?php get_template_part('template-parts/ads/adsense', 'sidebar'); ?>
     <?php dynamic_sidebar('sidebar-1'); ?>
 </aside>

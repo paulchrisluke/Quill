@@ -12,79 +12,57 @@ if (! defined('ABSPATH')) {
 }
 ?>
 
-<article id="post-<?php the_ID(); ?>" <?php post_class('recipe-article'); ?>>
-    <?php if (! quill_is_amp()) : ?>
-        <?php quill_adsense_ad('recipe_top'); ?>
-    <?php endif; ?>
-
+<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
     <header class="entry-header">
-        <?php if (has_post_thumbnail()) : ?>
-            <div class="recipe-featured-image">
-                <?php if (quill_is_amp()) : ?>
-                    <amp-img src="<?php the_post_thumbnail_url('quill-recipe'); ?>"
-                        width="800"
-                        height="600"
-                        layout="responsive"
-                        alt="<?php the_title_attribute(); ?>">
-                    </amp-img>
-                <?php else : ?>
-                    <?php the_post_thumbnail('quill-recipe', array('class' => 'recipe-image')); ?>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
+        <?php
+        if (has_post_thumbnail()) :
+            $thumbnail_id = get_post_thumbnail_id();
+            $media_details = quill_get_media_details($thumbnail_id);
+            if ($media_details) :
+        ?>
+                <amp-img
+                    src="<?php echo esc_url($media_details['url']); ?>"
+                    width="<?php echo esc_attr($media_details['width']); ?>"
+                    height="<?php echo esc_attr($media_details['height']); ?>"
+                    layout="responsive"
+                    alt="<?php echo esc_attr($media_details['alt']); ?>"></amp-img>
+        <?php
+            endif;
+        endif;
+        ?>
 
         <?php the_title('<h1 class="entry-title">', '</h1>'); ?>
 
         <div class="entry-meta">
-            <?php quill_posted_on(); ?>
+            <?php
+            // Add recipe meta information here
+            echo '<span class="posted-on">' . esc_html(get_the_date()) . '</span>';
+            ?>
         </div>
     </header>
 
-    <div class="recipe-content">
-        <div class="recipe-summary">
-            <?php the_excerpt(); ?>
-        </div>
+    <div class="entry-content">
+        <?php
+        the_content();
 
-        <?php quill_recipe_meta(); ?>
-
-        <?php if (! quill_is_amp()) : ?>
-            <?php quill_adsense_ad('content'); ?>
-        <?php endif; ?>
-
-        <div class="recipe-main">
-            <div class="recipe-ingredients-wrapper">
-                <?php quill_recipe_ingredients(); ?>
-            </div>
-
-            <div class="recipe-instructions-wrapper">
-                <?php quill_recipe_instructions(); ?>
-            </div>
-
-            <?php if (! quill_is_amp()) : ?>
-                <?php quill_adsense_ad('recipe_bottom'); ?>
-            <?php endif; ?>
-
-            <?php if ($notes = quill_get_recipe_notes()) : ?>
-                <div class="recipe-notes-wrapper">
-                    <?php quill_recipe_notes(); ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($nutrition = quill_get_recipe_nutrition()) : ?>
-                <div class="recipe-nutrition-wrapper">
-                    <?php quill_recipe_nutrition(); ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <footer class="entry-footer">
-            <?php quill_entry_footer(); ?>
-        </footer>
+        wp_link_pages(array(
+            'before' => '<div class="page-links">' . esc_html__('Pages:', 'quill'),
+            'after'  => '</div>',
+        ));
+        ?>
     </div>
 
-    <?php if (! quill_is_amp() && comments_open()) : ?>
-        <div class="recipe-comments">
-            <?php comments_template(); ?>
-        </div>
-    <?php endif; ?>
+    <footer class="entry-footer">
+        <?php
+        $categories_list = get_the_category_list(esc_html__(', ', 'quill'));
+        if ($categories_list) {
+            printf('<span class="cat-links">' . esc_html__('Posted in %1$s', 'quill') . '</span>', $categories_list);
+        }
+
+        $tags_list = get_the_tag_list('', esc_html__(', ', 'quill'));
+        if ($tags_list) {
+            printf('<span class="tags-links">' . esc_html__('Tagged %1$s', 'quill') . '</span>', $tags_list);
+        }
+        ?>
+    </footer>
 </article>

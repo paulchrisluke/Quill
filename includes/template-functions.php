@@ -47,7 +47,7 @@ function quill_get_adsense_settings()
 }
 
 /**
- * Register required scripts and styles
+ * Register required styles
  */
 function quill_register_assets()
 {
@@ -58,29 +58,8 @@ function quill_register_assets()
         array(),
         wp_get_theme()->get('Version')
     );
-
-    // Register scripts
-    if (!quill_is_amp()) {
-        wp_register_script(
-            'quill-adsense',
-            'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
-            array(),
-            null,
-            true
-        );
-    }
 }
 add_action('wp_enqueue_scripts', 'quill_register_assets');
-
-/**
- * Add required AMP components
- */
-function quill_amp_add_components($data)
-{
-    $data['amp_component_scripts']['amp-ad'] = 'https://cdn.ampproject.org/v0/amp-ad-0.1.js';
-    return $data;
-}
-add_filter('amp_post_template_data', 'quill_amp_add_components');
 
 /**
  * Add custom image sizes

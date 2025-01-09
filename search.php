@@ -38,8 +38,8 @@ get_header();
                 get_template_part('template-parts/content', 'search');
 
                 // Show ad after every third post
-                if (! quill_is_amp() && 0 === $wp_query->current_post % 3) {
-                    quill_adsense_ad('content');
+                if (0 === $wp_query->current_post % 3) {
+                    get_template_part('template-parts/ads/adsense', 'search');
                 }
 
             endwhile;

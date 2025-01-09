@@ -4,7 +4,7 @@
  * Template for displaying single recipe posts
  */
 
-get_header('amp');
+get_header();
 ?>
 
 <main id="primary" class="site-main">
@@ -30,15 +30,15 @@ get_header('amp');
                 <div class="recipe-featured-image">
                     <?php
                     $thumbnail_id = get_post_thumbnail_id();
-                    $thumbnail_data = wp_get_attachment_image_src($thumbnail_id, 'full');
-                    if ($thumbnail_data) :
+                    $media_details = quill_get_media_details($thumbnail_id);
+                    if ($media_details) :
                     ?>
                         <amp-img
-                            src="<?php echo esc_url($thumbnail_data[0]); ?>"
-                            width="<?php echo absint($thumbnail_data[1]); ?>"
-                            height="<?php echo absint($thumbnail_data[2]); ?>"
+                            src="<?php echo esc_url($media_details['url']); ?>"
+                            width="<?php echo absint($media_details['width']); ?>"
+                            height="<?php echo absint($media_details['height']); ?>"
                             layout="responsive"
-                            alt="<?php the_title_attribute(); ?>">
+                            alt="<?php echo esc_attr($media_details['alt']); ?>">
                         </amp-img>
                     <?php endif; ?>
                 </div>
@@ -141,5 +141,5 @@ get_header('amp');
 </main>
 
 <?php
-get_footer('amp');
+get_footer();
 ?>

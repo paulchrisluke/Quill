@@ -2,9 +2,11 @@
 
 /**
  * The main template file
+ *
+ * @package Quill
  */
 
-get_header('amp');
+get_header();
 ?>
 
 <main id="primary" class="site-main">
@@ -28,17 +30,20 @@ get_header('amp');
                     <?php
                     if (has_post_thumbnail()) :
                         $thumbnail_id = get_post_thumbnail_id();
-                        $thumbnail_data = wp_get_attachment_image_src($thumbnail_id, 'full');
-                        if ($thumbnail_data) :
+                        error_log('Quill Theme - Thumbnail ID: ' . $thumbnail_id);
+                        $media_details = quill_get_media_details($thumbnail_id);
+                        if ($media_details) :
                     ?>
                             <amp-img
-                                src="<?php echo esc_url($thumbnail_data[0]); ?>"
-                                width="<?php echo absint($thumbnail_data[1]); ?>"
-                                height="<?php echo absint($thumbnail_data[2]); ?>"
+                                src="<?php echo esc_url($media_details['url']); ?>"
+                                width="<?php echo absint($media_details['width']); ?>"
+                                height="<?php echo absint($media_details['height']); ?>"
                                 layout="responsive"
-                                alt="<?php the_title_attribute(); ?>">
+                                alt="<?php echo esc_attr($media_details['alt']); ?>">
                             </amp-img>
                     <?php
+                        else:
+                            error_log('Quill Theme - No media details returned for thumbnail ID: ' . $thumbnail_id);
                         endif;
                     endif;
 
